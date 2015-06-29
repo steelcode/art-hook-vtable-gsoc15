@@ -27,7 +27,6 @@
 #include "utils.h"
 
 
-
 // this file is going to be compiled into a thumb mode binary
 
 void __attribute__ ((constructor)) my_init(void);
@@ -74,25 +73,8 @@ void init_hook()
 	JNIEnv* env;
     env = getEnv(vms);
 	log("jnienv = 0x%08x \n", (unsigned int) env);
-    //(*env)->FindClass(env, "aasd");
-
-    jobject systemCL = getSystemClassLoader(env);   
-    jobject dexloader  = createDexClassLoader(env, systemCL);   
-    jclass c = loadClassFromClassLoader(env, dexloader);   
-    jclass test = findClassFromClassLoader(env,dexloader);
-    
-    //jclass test = (*env)->FindClass(env, "org/sid/arthookbridge/HookCls");
-    LOGI("trovato test : %x \n " , (unsigned int) test);
-    if(jniRegisterNativeMethods(env, test) == 1 ){
-        LOGI("ERRORE REGISTRAZIONE METODI NATIVI!!!\n");
-    }
-
-    jmethodID testID = (*env)->GetStaticMethodID(env, test, "getDeviceId", "()Ljava/lang/String;");
-    log("trovato il metodo test nella mia class: %x \n", (unsigned int) testID);
-    arthook_t* tmp = create_hook(env,"android/telephony/TelephonyManager", "getDeviceId", "()Ljava/lang/String;", testID);
-    add_hook(tmp);
+    arthook_manager_init(env);
     LOGI("FINITO INIT HOOK !!!\n");
-    //call_original_method(env, tmp);
     //_suspendAllForDbg(&d);    
 
 }

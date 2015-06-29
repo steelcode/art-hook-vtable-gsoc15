@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := libarthook
 LOCAL_SRC_FILES := main.c  artstuff.c  epoll_arm.c.arm 
 LOCAL_SRC_FILES += utils.c arthook_helper.c arthook_manager.c
-LOCAL_SRC_FILES += jni_wrappers.c  arthook_bridge.c
+LOCAL_SRC_FILES += jni_wrappers.c  arthook_bridge.c hook_demo.c
 LOCAL_C_INCLUDES := ../../../adbi/instruments/base/
 #LOCAL_INCLUDE   := ../../../adbi/instruments/base/hook.h
 LOCAL_CFLAGS := -g -std=gnu99

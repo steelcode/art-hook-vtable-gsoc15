@@ -1,6 +1,3 @@
-#include <sys/types.h>
-#include <pthread.h>
-
 #include "arthook_manager.h"
 
 
@@ -8,10 +5,12 @@ static struct arthook_t *h = NULL;
 
 pthread_rwlock_t lock;
 
-int init()
+int arthook_manager_init(JNIEnv* env)
 {
     if (pthread_rwlock_init(&lock,NULL) != 0) return 1;
+    hook_demo_init(env);
 }
+
 int add_hook(arthook_t* new)
 {
     if (pthread_rwlock_wrlock(&lock) != 0) return 1;
@@ -27,14 +26,14 @@ arthook_t* find_key(char* key)
     return myhook;
 
 }
-jstring hooks_manager_OriginalCall
-  (JNIEnv *env, jstring hook_key)
+jobject hooks_manager_OriginalCall
+  (JNIEnv *env, jstring hook_key, jobject o, jstring arg1)
 {
     char *key = getCharFromJstring(env, hook_key);
     LOGI("dentro hooks manager, cerco : %s \n", key);
     arthook_t* myhook = find_key(key);
     if(myhook == NULL)
-      return NULL;
-    return (jstring) call_original_method(env, myhook);    
+        return NULL;
+    return  call_original_method(env, myhook, o, arg1);    
 }
 

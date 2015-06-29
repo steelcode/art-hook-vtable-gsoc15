@@ -12,7 +12,7 @@ JNIEnv* getEnv(JavaVM* vms)
     }
     return env;
 }
-jobject createDexClassLoader(JNIEnv* env, jobject classLoader)
+jobject createDexClassLoader(JNIEnv* env, jobject classLoader, char* mydexpath, char* myoptdir)
 {
     jthrowable exc;
     LOGI("dentro create dex class loader!!! pid: %d\n", getpid());
@@ -20,9 +20,9 @@ jobject createDexClassLoader(JNIEnv* env, jobject classLoader)
     LOGI("trovata classe dexclassloader %x \n", dexclassloader_cls);
     jmethodID constructor = (*env)->GetMethodID(env, dexclassloader_cls, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V");
     LOGI("trovato methodid: %x \n", constructor);
-    char* dexPath = "/data/local/tmp/dex/target.dex";
+    char* dexPath = mydexpath;
     // il proprietario di questa dir deve essere l'app
-    char* optDir = "/data/local/tmp/dex/opt";
+    char* optDir = myoptdir;
     jstring dexPathJ = (*env)->NewStringUTF(env, dexPath);
     jstring optDirJ = (*env)->NewStringUTF(env, optDir);
     char* libraryPath = "";
@@ -48,25 +48,25 @@ jobject getSystemClassLoader(JNIEnv* env)
 
 }
 
-jclass loadClassFromClassLoader(JNIEnv* env, jobject classLoader)
+jclass loadClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetName)
 {
     LOGI("dentro loadclass from classloader \n ");
     jclass classLoader_cls = (*env)->FindClass(env,"java/lang/ClassLoader");
     jmethodID loadClass = (*env)->GetMethodID(env, classLoader_cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
     LOGI("trovato meth loadClass: %x \n", loadClass);
     //jstring name = (*env)->NewStringUTF(env,"test/sid/org/ndksample/HookCls");   
-    jstring name = (*env)->NewStringUTF(env,"org/sid/arthookbridge/HookCls");   
+    jstring name = (*env)->NewStringUTF(env,targetName);   
     jclass loaded = (*env)->CallObjectMethod(env, classLoader, loadClass, name);
     LOGI("caricata class: %x \n" , loaded);
     return loaded;
 }
 
-jclass findClassFromClassLoader(JNIEnv* env, jobject classLoader)
+jclass findClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetName)
 {
     jclass classLoader_cls = (*env)->FindClass(env,"java/lang/ClassLoader");
     jmethodID findClass = (*env)->GetMethodID(env, classLoader_cls, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
     LOGI("trovato meth findClass: %x \n", findClass);
-    jstring name = (*env)->NewStringUTF(env,"org/sid/arthookbridge/HookCls");   
+    jstring name = (*env)->NewStringUTF(env,targetName);   
     jclass res = (*env)->CallObjectMethod(env,classLoader,findClass,name);
     LOGI("trovata Hookcls class: %x \n" , res);
     return res; 

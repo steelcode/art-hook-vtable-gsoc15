@@ -3,10 +3,10 @@
 
 JNIEnv* getEnv(JavaVM*);
 
-jobject createDexClassLoader(JNIEnv* , jobject );
+jobject createDexClassLoader(JNIEnv* , jobject, char*, char* );
 
 jobject getSystemClassLoader(JNIEnv*);
 
-jclass findClassFromClassLoader(JNIEnv* , jobject );
+jclass findClassFromClassLoader(JNIEnv* , jobject , char*);
 
-jclass loadClassFromClassLoader(JNIEnv* , jobject );
+jclass loadClassFromClassLoader(JNIEnv* , jobject , char*);
