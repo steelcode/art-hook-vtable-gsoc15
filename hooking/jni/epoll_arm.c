@@ -15,7 +15,7 @@
 #undef log
 
 #define log(...) \
-        {FILE *fp = fopen("/data/local/tmp/arm_example.log", "a+"); if (fp) {\
+        {FILE *fp = fopen("/data/local/tmp/arm_arthook.log", "a+"); if (fp) {\
         fprintf(fp, __VA_ARGS__);\
         fclose(fp);}}
 

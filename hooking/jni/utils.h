@@ -13,7 +13,7 @@
 #include "uthash.h"
 
 
-#define TAG "NDKTEST"
+#define TAG "ARTvtablehook"
 #define DEBUG 0
 
 #define LOGI(...) \

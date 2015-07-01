@@ -112,6 +112,6 @@ void my_init(void)
   
     
 	hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
-    log("fine init\n");
+    log("fine %s \n", __PRETTY_FUNCTION_);
 }
 
