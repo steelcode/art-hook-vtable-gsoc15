@@ -1,9 +1,11 @@
 #include "arthook_bridge.h"
 
-jobject cippa(JNIEnv* env, jobject this, jstring jstr, jobject thiz, jstring arg1)
+jobject _callOriginalMethod(JNIEnv* env, jobject this, jstring jstr, jobject thiz, jstring arg1)
 {
-    LOGI("STA CIPPPPPAAAAA thiz: %x, jstr: %x  \n", thiz, jstr);
-    return hooks_manager_OriginalCall(env, jstr, thiz, arg1);
+    LOGI(" %s thiz: %x, jstr: %x  \n", __PRETTY_FUNCTION__, thiz, jstr);
+    jobject gThiz = (*env)->NewGlobalRef(env, thiz);
+    jstring gStrArg = (jstring) (*env)->NewGlobalRef(env, arg1);
+    return hooks_manager_OriginalCall(env, jstr, gThiz, gStrArg);
 }
 
 void _init_from_java(JNIEnv* env, jobject thiz, jobject arg)
@@ -59,7 +61,7 @@ void _init_from_java(JNIEnv* env, jobject thiz, jobject arg)
 static JNINativeMethod artHookMethods[] = {
     /* name, signature, funcPtr */ 
     { "callOriginalMethod", "(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",
-            (void*) cippa },
+            (void*) _callOriginalMethod },
     { "init_from_java", "(Ljava/lang/Object;)V",
             (void*) _init_from_java },
 };
