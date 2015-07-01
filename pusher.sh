@@ -55,4 +55,4 @@ check_adb
 check_file
 adb_push_files
 
-echo "all files has been pushed on the devices!"
+echo "all files has been pushed on the device!"
