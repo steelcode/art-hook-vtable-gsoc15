@@ -4,7 +4,7 @@
 #-p -l  -d -z -s 
 BIN=/data/local/tmp/hijack 
 PIDZYG=`ps | grep zygote  | awk '{print $2}'`
-LIB=/data/local/tmp/libdynsec.so
+LIB=/data/local/tmp/libarthook.so
 ZYG=true
 
 function help ()

@@ -4,6 +4,7 @@
 HIJACK="hijack/libs/armeabi/hijack"
 ARTHOOK="hooking/libs/armeabi/libarthook.so"
 DEXFILE="examples/target.dex"
+SCRIPTDIR="scripts"
 
 DESTDIR="/data/local/tmp"
 
@@ -37,12 +38,17 @@ check_ret () {
 	fi
 }
 adb_push_files (){
-	adb -e push $HIJACK $DESTDIR
+	adb push $HIJACK $DESTDIR
 	check_ret
-	command adb -e push $ARTHOOK $DESTDIR
+	command adb  push $ARTHOOK $DESTDIR
 	check_ret
-	command adb -e push $DEXFILE $DESTDIR
+	command adb  push $DEXFILE $DESTDIR
 	check_ret
+
+    for file in `ls $SCRIPTDIR/*.sh`;
+    do
+        command adb push $file $DESTDIR
+    done
 }
 
 check_adb () {
