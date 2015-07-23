@@ -1,12 +1,18 @@
-#include <jni.h>
+#ifndef _JNIWRAPPERSH_
+#define _JNIWRAPPERSH_
+
 #include "utils.h"
+#include "globals.h" 
+#include "artstuff.h"
 
-JNIEnv* getEnv(JavaVM*);
+extern JNIEnv* getEnv();
 
-jobject createDexClassLoader(JNIEnv* , jobject, char*, char* );
+extern jobject createDexClassLoader(JNIEnv* , jobject, char*, char* );
 
-jobject getSystemClassLoader(JNIEnv*);
+extern jobject getSystemClassLoader(JNIEnv*);
 
-jclass findClassFromClassLoader(JNIEnv* , jobject , char*);
+extern jclass findClassFromClassLoader(JNIEnv* , jobject , char*);
 
-jclass loadClassFromClassLoader(JNIEnv* , jobject , char*);
+extern jclass loadClassFromClassLoader(JNIEnv* , jobject , char*);
+
+#endif

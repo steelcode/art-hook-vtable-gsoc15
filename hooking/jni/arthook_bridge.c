@@ -1,75 +1,52 @@
 #include "arthook_bridge.h"
 
+
 jobject _callOriginalMethod(JNIEnv* env, jobject this, jstring jstr, jobject thiz, jstring arg1)
 {
     LOGI(" %s thiz: %x, jstr: %x  \n", __PRETTY_FUNCTION__, thiz, jstr);
     jobject gThiz = (*env)->NewGlobalRef(env, thiz);
     jstring gStrArg = (jstring) (*env)->NewGlobalRef(env, arg1);
-    return hooks_manager_OriginalCall(env, jstr, gThiz, gStrArg);
+    return hook_bridge_OriginalCall(env, jstr, gThiz, gStrArg);
 }
-
-void _init_from_java(JNIEnv* env, jobject thiz, jobject arg)
+jobject _get_original_method(JNIEnv* env, jobject trashme, jstring hook_key)
 {
-    LOGI("---------------DENTRO INIT FROM JAVA\n");
-    jmethodID testID;
-    jclass cls;
-    jmethodID originalID;
-    arthook_t* tmp;
-    
-    jobject dexloader = get_dexloader();
-    jclass test = findClassFromClassLoader(env,dexloader,"org/sid/arthookbridge/HookCls" );
-
-
-    LOGI("\n\n");
-
-    //testID = (*env)->GetStaticMethodID(env, test, "initFile", "(Ljava/lang/String;)V");
-
-/* 
-    LOGI("creo hook SENDTESTSMS\n");
-
-    testID = (*env)->GetStaticMethodID(env, test, "sendTextMessage", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V");    
-    LOGI("2 testid: %x\n", testID);
-
-
-    callForSms(env);       
-
-
-    jobject gObj = (*env)->NewGlobalRef(env, arg);
-    //LOGI("3 globalobj: %x \n", gObj);
-    cls = (*env)->FindClass(env, "android/telephony/SmsManager");
-    //cls = (jclass)(*env)->GetObjectClass(env, arg);
-    //LOGI("trovata smsclazz: %x\n", cls);
-    
-    originalID = (*env)->GetMethodID(env, cls, "sendTextMessage", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V");
-    
-    LOGI("trovato PRIMA  ORIGINALID: %x\n", originalID);
-
-    tmp = create_hook_obj(env, cls, gObj,"android/telephony/SmsManager", "sendTextMessage","(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V",testID);
-    
-    //originalID = (*env)->GetMethodID(env, cls,"sendTextMessage", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V");
-    //LOGI("trovato DOPO ORIGINALID: %x\n", originalID);
-
-    LOGI("ARTHOOK BRIDGE DOPO CREATE HOOK\n");
-    add_hook(tmp);
-
-    callForSms(env);    
-*/  
+    LOGI("chiamato %s \n ",  __PRETTY_FUNCTION__ ); 
+    char *key = getCharFromJstring(env, hook_key);
+    LOGI("cerco il metodo : %s \n", key);    
+    arthook_t* h = get_hook_by_key(key);
+    if(!h) return NULL;
+    void* asd = malloc(4);
+    LOGI("io valgo: %x \n", &h->original_meth_ID);
+    memcpy(asd, &h->original_meth_ID, 4);
+    LOGI("ora valgo %x \n", asd);
+    return (jobject) (*env)->NewGlobalRef(env, asd);
     
 }
 
+//DEPRECATED
+jobject hook_bridge_OriginalCall
+  (JNIEnv *env, jstring hook_key, jobject o, jstring arg1)
+{
+    char *key = getCharFromJstring(env, hook_key);
+    LOGI("dentro hooks manager, cerco : %s \n", key);
+    arthook_t* myhook = get_hook_by_key(key);
+    if(myhook == NULL)
+        return NULL;
+    return  call_original_method(env, myhook, o, arg1);    
+}
 
 static JNINativeMethod artHookMethods[] = {
     /* name, signature, funcPtr */ 
+    //DEPRECATED
     { "callOriginalMethod", "(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",
             (void*) _callOriginalMethod },
-    { "init_from_java", "(Ljava/lang/Object;)V",
-            (void*) _init_from_java },
+    //UNUSED
+    {"get_original_method", "(Ljava/lang/String;)Ljava/lang/Object;", (void*) _get_original_method },
 };
 
 
 int jniRegisterNativeMethods(JNIEnv* env, jclass cls)
 {
-
 
     if ((*env)->RegisterNatives(env, cls, artHookMethods, NELEM(artHookMethods)) < 0) {
         return 1;

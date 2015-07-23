@@ -1,17 +1,17 @@
+#ifndef _ARTSTUFFH_
+#define _ARTSTUFFH_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <stdarg.h>
 #include <jni.h>
 
-void (*log_function)(char *logmsg);
+#include "arthook_t.h"
+#include "globals.h"
 
-#undef log
+struct artstuff_t d;
 
-#define log(...) \
-        {FILE *fp = fopen("/data/local/tmp/asd_example.log", "a+"); if (fp) {\
-        fprintf(fp, __VA_ARGS__);\
-        fclose(fp);}}
 
 typedef jint (*JNI_GetCreatedJavaVMs_func)(void**,jsize,jsize*);
 typedef void* (*art_th_currentFromGdb_func)();
@@ -34,3 +34,5 @@ void _GetCreatedJavaVMs(struct artstuff_t*,void**,jsize, jsize*);
 jclass _art_jni_FindClass(struct artstuff_t* , JNIEnv* , const char* );
 void _suspendAllForDbg(struct artstuff_t *);
 void resolve_symbols(struct artstuff_t *);
+
+#endif

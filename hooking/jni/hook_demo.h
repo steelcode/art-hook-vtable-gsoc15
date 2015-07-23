@@ -17,3 +17,4 @@ typedef struct{
 
 int hook_demo_init(JNIEnv*);
 jobject get_dexloader();
+void printStackTraceFromJava(JNIEnv* );

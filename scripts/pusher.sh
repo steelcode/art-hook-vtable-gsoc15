@@ -37,11 +37,11 @@ check_ret () {
 	fi
 }
 adb_push_files (){
-	adb push $HIJACK $DESTDIR
+	adb -e push $HIJACK $DESTDIR
 	check_ret
-	command adb push $ARTHOOK $DESTDIR
+	command adb -e push $ARTHOOK $DESTDIR
 	check_ret
-	command adb push $DEXFILE $DESTDIR
+	command adb -e push $DEXFILE $DESTDIR
 	check_ret
 }
 

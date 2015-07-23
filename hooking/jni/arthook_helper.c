@@ -1,16 +1,19 @@
 /*
-   Functions to help with the hooking steps.
-   */
+   Helper functions
+
+   
+*/
+
+
 #include "arthook_helper.h"
 
-void *oldpointer;
 
 /*
    set the hook, pointed by arthook_t*, in memory.
    */
 int set_hook(JNIEnv *env, arthook_t *h)
 {
-    LOGI("set_hook\n");
+    arthooklog("set_hook\n");
     unsigned int *res = searchInMemoryVtable( (unsigned int) h->original_meth_ID, (unsigned int) h->original_meth_ID, isLollipop(env));
     if(res == 0) return 0;
     LOGI("set_pointer 0x%08x with 0x%08x \n", (unsigned int) h->original_meth_ID, (unsigned int) h->hook_meth_ID);
@@ -24,155 +27,6 @@ int set_hook(JNIEnv *env, arthook_t *h)
 */    
     LOGI("analyze2 finito set_pointer!!!! \n");
     return 1;
-}
-
-void callOriginalSms(JNIEnv* env, arthook_t* h)
-{
-    LOGI("------------------------------------------------------------------------------\n\n");    
-    LOGI("CALL ORIGINAL SMS\n");
-    jclass smsclazz = (*env)->FindClass(env, "android/telephony/SmsManager");
-    if (smsclazz) {
-        LOGI("trovata smsclass: %x\n", smsclazz);
-        jmethodID get = (*env)->GetStaticMethodID(env, smsclazz, "getDefault",
-                "()Landroid/telephony/SmsManager;");
-        jobject sms = (*env)->NewObject(env, smsclazz, get); 
-        jmethodID send =
-            (*env)->GetMethodID(env, smsclazz, "sendTextMessage",
-                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V");
-        LOGI("trovato sendtextoriginal: %x \n", send);
-        jstring destinationAddress = (*env)->NewStringUTF(env, "3316103533");
-        jstring text = (*env)->NewStringUTF(env, "nativew00t");
-        if (send) {
-            (*env)->CallVoidMethod(env, sms, send, destinationAddress, NULL,
-                    text, NULL, NULL);
-            //jobject gsms = (*env)->NewGlobalRef(env, sms);
-            //(*env)->CallNonvirtualVoidMethod(env, gsms, smsclazz, h->original_meth_ID, destinationAddress, NULL,
-            //               text,NULL,NULL);
-            //(*env)->CallStaticObjectMethod(env, smsclazz, h->original_meth_ID, destinationAddress, NULL, text, 
-            //                NULL, NULL);
-        }
-    }
-
-    LOGI("------------------------------------------------------------------------------\n\n");    
-
-}
-
-callForSms(JNIEnv* env)
-{
-    int k = 0;
-    for (k = 0 ; k < 4 ; k++ ){
-        callOriginalSms(env, NULL);
-    }
-
-}
-
-void* callOriginalDeviceID(JNIEnv* env, arthook_t* h)
-{
-    LOGI("dentro call original device id\n");
-    /*
-       jclass cls = (*env)->FindClass(env, "android/content/Context");
-
-       jmethodID mid = (*env)->GetMethodID(env, cls, "getSystemService",
-       "(Ljava/lang/String;)Ljava/lang/Object;");
-       jfieldID fid = (*env)->GetStaticFieldID(env, cls, "TELEPHONY_SERVICE",
-       "Ljava/lang/String;");
-       jstring str = (*env)->GetStaticObjectField(env, cls, fid);
-       jobject telephony = (*env)->CallObjectMethod(env, cls, mid, str);
-
-       cls = (*env)->FindClass(env, "android/telephony/TelephonyManager");
-       mid =(*env)->GetMethodID(env, cls, "getDeviceId", "()Ljava/lang/String;");
-    //str = (*env)->CallObjectMethod(env, telephony, mid);
-    str =  (*env)->CallNonvirtualObjectMethod(env, telephony, cls, h->original_meth_ID,NULL);
-
-    jsize len = (*env)->GetStringUTFLength(env, str);
-    char* deviceId = calloc(len + 1, 1);
-    (*env)->GetStringUTFRegion(env, str, 0, len, deviceId);
-    LOGI("ORIGINAL DEVICE ID: %s\n", deviceId);
-    return str;
-    //(*env)->DeleteLocalRef(env, str);
-    */
-}
-
-// thiz is a globalref
-jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jstring arg1)
-{
-
-    LOGI("!!!!!!!!!!!!!!! call original, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
-
-    jobject res = NULL;
-
-    if(strstr(h->key, "sendTextMessage") ) 
-    {
-        callOriginalSms(env, h);
-    }
-    else{
-        jclass t = (*env)->GetObjectClass(env, thiz);
-        LOGI("original  cls: %x\n", t);
-        if(strstr(h->key, "openFileOutput")) {
-            jsize len = (*env)->GetStringUTFLength(env, arg1);
-            char* fileName = calloc(len + 1, 1);
-            (*env)->GetStringUTFRegion(env, arg1, 0, len, fileName);
-            LOGG("ORIGINAL FILE NAME: %s\n", fileName);
-            jint arg2 = 0;
-            LOGI("calling original openFileOutput \n");
-            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, arg1, arg2, NULL);    
-        }
-        else{
-            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, NULL);    
-        }
-        //res = (*env)->CallStaticObjectMethod(env, gT, h->original_meth_ID, NULL);
-        /*
-           LOGI("DENTRO CALL ORIGINAL METHOD ENTRYPOINT\n");
-           jclass cls = (*env)->FindClass(env, "android/telephony/TelephonyManager");
-           jobject o = little_hack(env, cls);
-           jmethodID originalID = (*env)->GetMethodID(env, cls, "getDeviceId", "()Ljava/lang/String;");
-           LOGI("DENTRO ORIGINAL CALL GETDEVICEID trovato ORIGINALID: %x\n", originalID);
-           res = (*env)->CallObjectMethod(env, o, originalID, NULL);
-           */
-    }
-    if(res != NULL)
-        return (*env)->NewGlobalRef(env, res);
-    return NULL;
-}
-
-jobject little_hack_special()
-{
-
-}
-
-jobject little_hack(JNIEnv* env, jclass cls) 
-{
-    LOGI("DENTRO LITTLE HACK!!!\n");
-    jmethodID mid = (*env)->GetMethodID(env, cls, "<init>", "()V");
-    jobject a = NULL;
-    jobject o = (*env)->NewObject(env, cls, mid,a, NULL);
-
-    return  (*env)->NewGlobalRef(env, o);
-}
-
-arthook_t* create_hook_obj(JNIEnv* env, jclass cls, jobject obj, char* clsname, char* mname, char* msig, jmethodID hookmid)
-{
-    arthook_t *tmp;
-    tmp = (arthook_t*) malloc(sizeof(struct arthook_t));
-    //jclass cls1 = (*env)->GetObjectClass(env, cls);
-    LOGI("create hook obj, cls: %x \n" , cls);
-    jmethodID targetmid = (*env)->GetMethodID(env, cls, mname, msig);
-    LOGI("CREATE HOOK SPECIAL TROVATO MID: %x \n " , targetmid);
-    strncpy(tmp->clsname, clsname, sizeof(tmp->clsname));
-    strncpy(tmp->mname, mname, sizeof(tmp->mname));
-    strncpy(tmp->msig, msig, sizeof(tmp->msig));
-    memset(tmp->key, 0, sizeof(tmp->key));
-    strcat(tmp->key,clsname);
-    strcat(tmp->key,mname);
-    strcat(tmp->key,msig);
-    LOGI("SALVO STRUCT \n");
-    tmp->hook_meth_ID = hookmid;
-    tmp->original_meth_ID = targetmid;
-    tmp->original_obj = obj;
-    tmp->original_cls = (jclass) (*env)->NewGlobalRef(env, cls);
-    set_hook(env, tmp);
-    return tmp;
-
 }
 
 /*
@@ -212,7 +66,10 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
     strcat(tmp->key,clsname);
     strcat(tmp->key,mname);
     strcat(tmp->key,msig);
-
+    jclass test;
+    jmethodID testid;
+    jobject tryme;
+    
     if(strstr(tmp->key, "sendTextMessage")) {
         LOGI(" CREATE HOOK DI TIPO SMS \n");    
         jclass cls = (*env)->FindClass(env, "android/telephony/SmsManager");
@@ -234,6 +91,12 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
         gTarget = (jclass) (*env)->NewGlobalRef(env, target);
         target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
         LOGI("TARGET METHODID is %d \n", target_meth_ID);
+        //try to resolve hook class and method here
+        //test = (*env)->FindClass(env, "java/lang/Object");
+        //LOGI("trovata porcodio di classe %x \n", test);
+        //testid = (*env)->GetMethodID(env, test, "toString", "()Ljava/lang/String;");
+        //LOGI("avevo: %x , trovato : %x \n", hookm, testid);
+        
     }    
 
     tmp->hook_meth_ID = hookm;
@@ -241,10 +104,92 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
     tmp->original_meth_ID = target_meth_ID;
     tmp->original_obj = NULL;//little_hack(env,gTarget);
     tmp->original_cls = gTarget;
+    //tmp->hook_cls = (jclass) gCls;
+    //tmp->hook_obj = (*env)->NewGlobalRef(env,hook_thiz);
     set_hook(env, tmp);
     LOGI("------------------------------------------------------------------------------\n");    
     return tmp;
 }
+
+
+void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject javaReceiver)
+{
+    LOGI("chiamato %s \n", __PRETTY_FUNCTION__);
+    jclass c = (*env)->FindClass(env, "java/lang/reflect/AbstractMethod");
+    LOGI("trovata abstractmethod %x \n", c);
+
+    jclass c1 = (*env)->FindClass(env, "java/lang/reflect/Method");
+    LOGI("trovata method clazz : %x \n", c1);
+
+    jfieldID fid = (*env)->GetFieldID(env, c, "artMethod", "Ljava/lang/reflect/ArtMethod;");
+    LOGI("trovato fieldID %x \n", fid);
+
+    // devo prendere l'offset dal fid (sta a +24)
+    // e applicarlo al javamethod
+    //
+
+    unsigned char* myfid = fid;
+    LOGI("primo : %x = %x , dopo sum: %x \n", myfid, *myfid, myfid+0x14);
+    unsigned char* off = (unsigned char*) (myfid + 0x14);
+    LOGI("!!! offset vale: %x %x \n", off, *off);
+
+    unsigned int* myclazz = javaMethod;
+
+    LOGI("my clazz: %x = %x \n", myclazz, *myclazz);
+
+    unsigned int* mymid = (unsigned int*) (*myclazz + *off);
+
+    LOGI("mio metodo target: %x = %x \n", mymid, *mymid);
+
+    int res = is_method_in_hashtable(mymid);
+    void* ret = NULL;
+    if(res){
+        arthook_t* tmp = (arthook_t*) get_method_from_hashtable(mymid);
+        LOGI("trovato hook su : %s \n", tmp->clsname);
+        jclass t = (*env)->GetObjectClass(env, javaReceiver);
+        LOGI("ARTHOOKHELPER chiamo il metodo con callnonvirtual \n");
+        ret = (*env)->CallNonvirtualObjectMethod(env,javaReceiver,t, tmp->original_meth_ID, NULL );
+        LOGI("ARTHOOKHELPER METODO CHIAMATO\n");
+        return ret;
+    }
+
+    return res;
+}
+
+// DEPRECATED
+jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jstring arg1)
+{
+
+    LOGI("!!!!!!!!!!!!!!! call original, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
+
+    jobject res = NULL;
+
+    if(strstr(h->key, "sendTextMessage") ) 
+    {
+        //callOriginalSms(env, h);
+    }
+    else{
+        jclass t = (*env)->GetObjectClass(env, thiz);
+        LOGI("original  cls: %x\n", t);
+        if(strstr(h->key, "openFileOutput")) {
+            jsize len = (*env)->GetStringUTFLength(env, arg1);
+            char* fileName = calloc(len + 1, 1);
+            (*env)->GetStringUTFRegion(env, arg1, 0, len, fileName);
+            LOGG("ORIGINAL FILE NAME: %s\n", fileName);
+            jint arg2 = 0;
+            LOGI("calling original openFileOutput \n");
+            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, arg1, arg2, NULL);    
+        }
+        else{
+            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, NULL);    
+        }
+    }
+    if(res != NULL)
+        return (*env)->NewGlobalRef(env, res);
+    return NULL;
+}
+
+
 /*
    Search a pointer in  the process' virtual memory, starting from address @start.
 
@@ -347,30 +292,6 @@ static unsigned int* searchInMemoryVmeths(unsigned int start, int gadget, int lo
 }
 
 
-/*
-   Create an instance of the classes named target_cls and patch_cls
-   call search_and_set with these objects as arguments
-   */
-int search_and_set_str(JNIEnv* env, char* target_cls, char* patch_cls)
-{
-    jobject target = createInstanceFromClsName(env, target_cls);
-    jobject patch = createInstanceFromClsName(env, patch_cls);
-
-    return search_and_set(env, target, patch, isLollipop(env));
-
-}
-/*
-   NOP
-   */
-void search_and_set2(unsigned long targetm, int proxym, int lollipop)
-{
-    unsigned int *res = searchInMemoryVtable( targetm, targetm, lollipop);
-    if(res == 0) return;
-    LOGI("trovato pointer at 0x%08x \n", res);
-    LOGI("set_pointer 0x%08x con 0x%08x \n", targetm, proxym);
-    set_pointer(res, proxym);
-    LOGI("analyze2 finito set_pointer!!!! \n");
-}
 
 /*
    Wrapper function
@@ -395,9 +316,9 @@ int search_and_set(JNIEnv *env, jobject c1, jobject c2, int lollipop){
     LOGI("trovato pointer at 0x%08x \n", res);
     //unsigned int *p = &(*res);
     //swap meth with meth2
-    oldpointer = (void*) *res;;
+    //oldpointer = (void*) *res;;
     set_pointer(res, (unsigned int) meth2);
-    LOGI("oldpointer vale: 0x%0x \n", oldpointer);
+    //LOGI("oldpointer vale: 0x%0x \n", oldpointer);
     //check successful set_pointer
     meth = getMethodID(env, cls1, MNAME, MSIG);
     meth2 = getMethodID(env, cls2, MNAME, MSIG);

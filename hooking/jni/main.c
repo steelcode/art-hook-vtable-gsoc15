@@ -15,25 +15,27 @@
 #include <jni.h>
 #include <stdlib.h>
 
+
 // adbi include
 #include "base.h"
-#include "hook.h"
 
 #include "artstuff.h"
+#include "arthook_t.h"
 #include "arthook_manager.h"
 #include "jni_wrappers.h"
-#include "arthook_bridge.h"
-#include "arthook_helper.h"
 #include "utils.h"
-
+#include "globals.h"
 
 // this file is going to be compiled into a thumb mode binary
 
 void __attribute__ ((constructor)) my_init(void);
 
 static struct hook_t eph;
-static struct artstuff_t d;
+static struct hook_t invokeh;
 
+char artlogfile[]  = "/data/local/tmp/arthook.log";
+
+JavaVM* vms = NULL;
 
 // for demo code only
 static int counter;
@@ -49,6 +51,19 @@ static void my_log(char *msg)
 {
 	log("%s", msg)
 }
+void artlogmsgtofile(char* msg){
+	int fp = open(artlogfile, O_WRONLY|O_APPEND);
+    if (fp != -1) {
+	    write(fp, msg, strlen(msg));
+	    close(fp);
+    }
+
+}
+void* set_arthooklogfunction(void* func){
+    void* old = log_function;
+    log_function = func;
+    return old;
+}
 
 /*
 JNIEXPORT jstring JNICALL Java_test_sid_org_ndksample_HookCls_callOriginalMethod
@@ -59,23 +74,49 @@ JNIEXPORT jstring JNICALL Java_test_sid_org_ndksample_HookCls_callOriginalMethod
 */
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
-    LOGI(" WOOWOWOOWOWOWO ARTHOOKCORE dentro JNI ONLOAD!! \n ");
     return JNI_VERSION_1_6;
 }
+
 void init_hook()
 {
     LOGI("INIT HOOK INIZIO\n");
-  	JavaVM* vms;
-	jsize vm_count;
-	jsize size;
-	_GetCreatedJavaVMs(&d, (void**) &vms, size, &vm_count);
-	log("chiamato getcreatedjavavms, valore: %p , count = %d \n", vms[0], vm_count);
-	JNIEnv* env;
-    env = getEnv(vms);
-	log("jnienv = 0x%08x \n", (unsigned int) env);
+    JNIEnv* env = get_jnienv();
     arthook_manager_init(env);
     LOGI("FINITO INIT HOOK !!!\n");
-    //_suspendAllForDbg(&d);    
+}
+
+void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs){
+    log("!!! dentro my invoke method, receiver vale: 0x%08x, javamethod : 0x%08x \n", javaReceiver, javaMethod);
+    
+    void* flag = 1;
+    void* res = NULL;
+    JNIEnv* th_env = get_jnienv();
+    log("env vvale: %x \n", th_env);
+    printStackTraceFromJava(th_env);
+
+    // check if an hooked method is the target of the reflection call
+    flag = hh_check_javareflection_call(th_env, javaMethod, javaReceiver);
+    
+    // checks:
+    // 1. the method called with reflection is hooked?
+    // 2. the call is from our patch method?
+    // 
+    void* (*orig_invoke_method)(void* soa, void* javaMethod, void* javaReceiver, void* javaArgs);
+    orig_invoke_method = (void*) invokeh.orig;
+    
+    if(!flag){
+        log("chiamo il metodo originale richiesto con la reflection \n");
+        hook_precall(&invokeh);
+
+        res = orig_invoke_method(soa,javaMethod,javaReceiver,javaArgs);
+    
+        hook_postcall(&invokeh);
+    }
+    else{
+        log("!!! NON chiamo il metodo originale usando la reflection! \n");
+        return flag;
+    }
+    return res;
 
 }
 
@@ -98,20 +139,23 @@ int my_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeo
     init_hook();
 	return res;
 }
-// se injetto in zygote va in freeze il lancio dell'activity
-// e non mi funziona l hook su epoll_wait
-// 
+
 void my_init(void)
 {
 	counter = 0;
 
-	log("%s started\n", __FILE__)
- 
+    // adbi and arthook log functions
 	set_logfunction(my_log);
+    set_arthooklogfunction(artlogmsgtofile);
+	log("%s started\n", __FILE__)
+    
+    // resolve libart.so symbols used by artstuff.c
 	resolve_symbols(&d);
   
-    
+    // hook native functions
 	hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
-    log("fine %s \n", __PRETTY_FUNCTION_);
+	hook(&invokeh, getpid(), "libart.", "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_", my_epoll_wait_arm, my_invoke_method);
+
+    log("fine %s \n", __PRETTY_FUNCTION__);
 }
 

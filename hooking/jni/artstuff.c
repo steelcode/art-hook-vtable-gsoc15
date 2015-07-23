@@ -4,13 +4,13 @@
 static void* mydlsym(void *hand, const char *name)
 {
 	void* ret = dlsym(hand, name);
-	log("%s = %p\n", name, ret)
+	arthooklog("%s = %p\n", name, ret);
 	return ret;
 }
 
 void resolve_symbols(struct artstuff_t *d){
 	d->art_hand = dlopen("libart.so", RTLD_NOW);
-	log("art_hand = 0x%08x \n", (unsigned int) d->art_hand);
+	arthooklog("art_hand = 0x%08x \n", (unsigned int) d->art_hand);
 	if(d->art_hand){
 		d->JNI_GetCreatedJavaVMs_fnPtr = mydlsym(d->art_hand, "JNI_GetCreatedJavaVMs");
         d->art_th_currentFromGdb_fnPtr = mydlsym(d->art_hand, "_ZN3art6Thread14CurrentFromGdbEv");
@@ -23,19 +23,19 @@ void resolve_symbols(struct artstuff_t *d){
 }
 
 void _GetCreatedJavaVMs(struct artstuff_t* d, void** vms, jsize size, jsize* vm_count){
-	log("dentro getcreatedjavavms \n");
+	arthooklog("dentro getcreatedjavavms \n");
 	jint res = 3;
-	log("chiamo: 0x%08x \n ", (unsigned int) d->JNI_GetCreatedJavaVMs_fnPtr);
+	arthooklog("chiamo: 0x%08x \n ", (unsigned int) d->JNI_GetCreatedJavaVMs_fnPtr);
 	res = d->JNI_GetCreatedJavaVMs_fnPtr(vms, size, vm_count);
-	log("res = %d\n", res);
+	arthooklog("res = %d\n", res);
 	if(res != JNI_OK){
-		log("error!!!!\n");
+		arthooklog("error!!!!\n");
 	}
 }
 
 void _suspendAllForDbg(struct artstuff_t *d)
 {
-    log("suspend vm: %x \n", (unsigned int) d->art_dbg_SuspendVM_fnPtr );
+    arthooklog("suspend vm: %x \n", (unsigned int) d->art_dbg_SuspendVM_fnPtr );
     //d->art_thlist_suspendAllForDbg_fnPtr();
     //d->art_th_DumpFromDbg_fnPtr();
     //d->art_dbg_SuspendVM_fnPtr();

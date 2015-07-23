@@ -8,39 +8,15 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include "modifiers.h"
-
-
+#include "hook.h"
+#include "globals.h"
 #include "uthash.h"
 
-
-#define TAG "ARTvtablehook"
-#define DEBUG 0
-
-#define LOGI(...) \
-        {if(DEBUG) {__android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__);}}
-
-#define LOGG(...) \
-        {__android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__);}
 
 #undef NELEM
 #define NELEM(x)            (sizeof(x)/sizeof(*(x)))
 
 
-#define CLAZZ_OFF 0x8
-//#define ACCESS_FLAG_OFF 28
-#define ITABLE_OFF 0x18 //24
-#define VMETHODS_OFF 0x30
-#define VMETHS_LEN_OFF 0x8
-
-#define VTABLE_OFF 0x34
-#define ACCESS_FLAG_OFF 28
-#define CSIZE_OFF 0x3c
-
-
-//LOLLIPOP
-#define LOLLIPOP_VTABLE_OFF 0x2c // 44
-#define LOLLIPOP_VMETHODS_OFF 0x2c // 44
-#define LOLLIPOP_CLAZZ_OFF 0x8 // 16
 
 #define MNAME "getId"
 #define MSIG "()Ljava/lang/String;"
