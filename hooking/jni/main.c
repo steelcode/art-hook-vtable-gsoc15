@@ -88,14 +88,14 @@ void init_hook()
 void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs){
     log("!!! dentro my invoke method, receiver vale: 0x%08x, javamethod : 0x%08x \n", javaReceiver, javaMethod);
     
-    void* flag = 1;
+    void* checkcalledmethod = 1;
     void* res = NULL;
     JNIEnv* th_env = get_jnienv();
     log("env vvale: %x \n", th_env);
-    printStackTraceFromJava(th_env);
+    jint checkstack = printStackTraceFromJava(th_env);
 
     // check if an hooked method is the target of the reflection call
-    flag = hh_check_javareflection_call(th_env, javaMethod, javaReceiver);
+    checkcalledmethod = hh_check_javareflection_call(th_env, javaMethod, javaReceiver);
     
     // checks:
     // 1. the method called with reflection is hooked?
@@ -104,7 +104,8 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
     void* (*orig_invoke_method)(void* soa, void* javaMethod, void* javaReceiver, void* javaArgs);
     orig_invoke_method = (void*) invokeh.orig;
     
-    if(!flag){
+    // called method is not an hooked method
+    if(!checkcalledmethod){
         log("chiamo il metodo originale richiesto con la reflection \n");
         hook_precall(&invokeh);
 
@@ -113,8 +114,19 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
         hook_postcall(&invokeh);
     }
     else{
-        log("!!! NON chiamo il metodo originale usando la reflection! \n");
-        return flag;
+        if(checkstack){
+            log("!!! NON chiamo il metodo originale usando la reflection! \n");    
+            // trapped call is from a "patch method"
+            // so we have to direct call the original method
+            return callOriginalReflectedMethod(th_env, javaReceiver, checkcalledmethod);            
+        }
+        else{
+            // we have to call the "patch method"
+            // 
+            log("!!! CHIAMO IL PATCH METHOD !!!  \n");            
+            return call_patch_method(th_env, (arthook_t*) checkcalledmethod, javaReceiver);
+        }
+        
     }
     return res;
 
@@ -154,7 +166,7 @@ void my_init(void)
   
     // hook native functions
 	hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
-	hook(&invokeh, getpid(), "libart.", "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_", my_epoll_wait_arm, my_invoke_method);
+    hook(&invokeh, getpid(), "libart.", "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_", my_epoll_wait_arm, my_invoke_method);
 
     log("fine %s \n", __PRETTY_FUNCTION__);
 }

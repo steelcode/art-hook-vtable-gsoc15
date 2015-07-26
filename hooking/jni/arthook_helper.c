@@ -42,7 +42,7 @@ int set_hook(JNIEnv *env, arthook_t *h)
    @return arthook_t the created arthook_t
 
 */
-arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char* msig, jmethodID hookm)
+arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char* msig, jclass hook_cls, jmethodID hookm)
 {
     LOGI("------------------------------------------------------------------------------\n\n");  
     LOGI("%s mname: %s , msig: %s \n ", __PRETTY_FUNCTION__, mname, msig);
@@ -104,7 +104,7 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
     tmp->original_meth_ID = target_meth_ID;
     tmp->original_obj = NULL;//little_hack(env,gTarget);
     tmp->original_cls = gTarget;
-    //tmp->hook_cls = (jclass) gCls;
+    tmp->hook_cls = hook_cls;
     //tmp->hook_obj = (*env)->NewGlobalRef(env,hook_thiz);
     set_hook(env, tmp);
     LOGI("------------------------------------------------------------------------------\n");    
@@ -145,18 +145,26 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
     void* ret = NULL;
     if(res){
         arthook_t* tmp = (arthook_t*) get_method_from_hashtable(mymid);
-        LOGI("trovato hook su : %s \n", tmp->clsname);
-        jclass t = (*env)->GetObjectClass(env, javaReceiver);
-        LOGI("ARTHOOKHELPER chiamo il metodo con callnonvirtual \n");
-        ret = (*env)->CallNonvirtualObjectMethod(env,javaReceiver,t, tmp->original_meth_ID, NULL );
-        LOGI("ARTHOOKHELPER METODO CHIAMATO\n");
-        return ret;
+        return tmp;
     }
 
     return res;
 }
 
-// DEPRECATED
+void* callOriginalReflectedMethod(JNIEnv* env, jobject javaReceiver, arthook_t* tmp){
+    LOGI("trovato hook su : %s \n", tmp->clsname);
+
+    return call_original_method(env, tmp, javaReceiver, NULL);
+}
+
+jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz){
+
+    LOGI("!!!!!!!!!!!!!!! call patch method from reflection, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
+
+    return (*env)->CallStaticObjectMethod(env, h->hook_cls, h->hook_meth_ID, thiz);    
+}
+
+// used by reflection calls
 jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jstring arg1)
 {
 

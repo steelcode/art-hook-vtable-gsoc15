@@ -26,11 +26,12 @@ jobject get_dexloader()
 {
     return gDexLoader;
 }
-void printStackTraceFromJava(JNIEnv* env)
+jint printStackTraceFromJava(JNIEnv* env)
 {
     jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
-    jmethodID mid = (*env)->GetStaticMethodID(env, test, "printStackTraces", "()V");
-    (*env)->CallStaticVoidMethod(env, test, mid);
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "printStackTraces", "()I");
+    jint res = (*env)->CallStaticIntMethod(env, test, mid);
+    return res;
 }
 
 void set_dexloader(JNIEnv* env)
@@ -38,7 +39,6 @@ void set_dexloader(JNIEnv* env)
     jobject systemCL = getSystemClassLoader(env);   
     jobject dexloader  = createDexClassLoader(env, systemCL,  MYDEXDIR,  MYOPTDIR); 
     gDexLoader = (*env)->NewGlobalRef(env, dexloader);  
-    jclass c1 = loadClassFromClassLoader(env, dexloader,"org/sid/arthookbridge/myApp" );         
     jclass c = loadClassFromClassLoader(env, dexloader,"org/sid/arthookbridge/HookCls" ); 
     jclass c2 = loadClassFromClassLoader(env, dexloader,"org/sid/arthookbridge/Utils" );         
 }
@@ -79,7 +79,7 @@ int hook_demo_init(JNIEnv* env)
         test = findClassFromClassLoader(env,dexloader, methodsToHook[i].hookclsname);
         jclass gtest = (*env)->NewGlobalRef(env, test);
         jmethodID testID = (*env)->GetStaticMethodID(env,gtest,methodsToHook[i].hookmname, methodsToHook[i].hookmsig);
-        arthook_t* tmp = create_hook(env,methodsToHook[i].cname, methodsToHook[i].mname, methodsToHook[i].msig, testID);
+        arthook_t* tmp = create_hook(env,methodsToHook[i].cname, methodsToHook[i].mname, methodsToHook[i].msig, gtest,testID);
         add_hook(tmp);
     }    
 

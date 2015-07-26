@@ -63,11 +63,11 @@ done
 #do
 if [ "$ZYG" = true ] ; then
 	echo "hijack su zygote, pck name: $PCKN"
-	$BIN -p $PIDZYG -l $LIB  -z -s $PCKN &
+	$BIN -p $PIDZYG -l $LIB -d  -z -s $PCKN -D 2 &
 	echo "eseguito"
 else
 	echo "hijack su pid: $PIDT"
-	test $BIN -p $PIDT -l $LIB
+	test $BIN -p $PIDT -l $LIB -d -D 2
 	echo "eseguito"
 fi
 #done
