@@ -18,7 +18,7 @@ extern JNIEnv* get_jnienv(){
 	jsize size = NULL;
     if(vms == NULL)
     	_GetCreatedJavaVMs(&d, (void**) &vms, size, &vm_count);
-	log("chiamato getcreatedjavavms, valore: %p , count = %d \n", vms[0], vm_count);
+	log("called getcreatedjavavms, results: %p , count = %d \n", vms[0], vm_count);
     JNIEnv* env = getEnv(vms);
 	log("jnienv = 0x%08x \n", (unsigned int) env);
     return env;
