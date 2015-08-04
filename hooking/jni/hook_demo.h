@@ -18,3 +18,4 @@ typedef struct{
 int hook_demo_init(JNIEnv*);
 jobject get_dexloader();
 jint printStackTraceFromJava(JNIEnv* );
+void calldiocane(JNIEnv*, jobject );

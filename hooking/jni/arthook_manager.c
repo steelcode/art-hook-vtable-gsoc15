@@ -26,20 +26,28 @@ arthook_t* get_hook_by_key(char* key)
     return myhook;
 }
 
+void print_hashtable(){
+    arthook_t* tmp = NULL;
+    for(tmp = h; tmp != NULL; tmp = tmp->hh.next){
+        LOGI("elemento: %s \n", tmp->clsname);
+        LOGI("original : %x \n", tmp->original_meth_ID);
+    }    
+}
+
 void* get_method_from_hashtable(unsigned int* target)
 {
     arthook_t* tmp = NULL;
-
+    int res = -1;
     for(tmp = h; tmp != NULL; tmp = tmp->hh.next){
         LOGI("elemento: %s \n", tmp->clsname);
         LOGI("original : %x \n", tmp->original_meth_ID);
         LOGI("sto cercando : %x \n", *target);
-        int res = memcmp(&tmp->original_meth_ID, target,4);
+        res = memcmp(&tmp->original_meth_ID, target,4);
         LOGI("risultato: %d \n", res);
         if(res == 0)
             return tmp;
-        else return NULL;
     }
+    return NULL;
 }
 
 int is_method_in_hashtable(unsigned int* target)
@@ -54,8 +62,8 @@ int is_method_in_hashtable(unsigned int* target)
         LOGI("risultato: %d \n", res);
         if(res == 0)
             return 1;
-        else return 0;
     }
+    return 0;
 }
 
 

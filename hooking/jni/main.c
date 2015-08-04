@@ -118,7 +118,7 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
             log("!!! NON chiamo il metodo usando la reflection! \n");    
             // trapped call is from a "patch method"
             // so we have to direct call the original method
-            return callOriginalReflectedMethod(th_env, javaReceiver, checkcalledmethod);            
+            return callOriginalReflectedMethod(th_env, javaReceiver, (arthook_t*) checkcalledmethod, javaArgs);            
         }
         else{
             // we have to call the "patch method"

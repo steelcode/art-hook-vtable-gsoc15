@@ -19,4 +19,6 @@ extern int is_method_in_hashtable();
 
 extern void* get_method_from_hashtable(unsigned int* target);
 
+extern void print_hashtable();
+
 

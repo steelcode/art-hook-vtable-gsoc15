@@ -151,10 +151,22 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
     return res;
 }
 
-void* callOriginalReflectedMethod(JNIEnv* env, jobject javaReceiver, arthook_t* tmp){
-    LOGI("trovato hook su : %s \n", tmp->clsname);
+void tryToUnbox(JNIEnv* env, unsigned int* javaArgs)
+{
+    arthooklog("chiamato trytounbox con : %x \n", javaArgs);
+    int * p = (int*) *javaArgs + 0x2;
+    
 
-    return call_original_method(env, tmp, javaReceiver, NULL);
+    arthooklog("trovata size array: %d a %x \n", *p, p);
+
+    calldiocane(env, (jobject) javaArgs);
+
+}
+
+void* callOriginalReflectedMethod(JNIEnv* env, jobject javaReceiver, arthook_t* tmp, jobject javaArgs){
+    LOGI("trovato hook su : %s \n", tmp->clsname);
+    tryToUnbox( env, (unsigned int) javaArgs);
+    return call_original_method(env, tmp, javaReceiver, javaArgs);
 }
 
 jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz){
@@ -165,7 +177,7 @@ jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz){
 }
 
 // used by reflection calls
-jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jstring arg1)
+jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject javaArgs) // jstring arg1)
 {
 
     LOGI("!!!!!!!!!!!!!!! call original, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
@@ -180,13 +192,15 @@ jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jstring ar
         jclass t = (*env)->GetObjectClass(env, thiz);
         LOGI("original  cls: %x\n", t);
         if(strstr(h->key, "openFileOutput")) {
+            /*
             jsize len = (*env)->GetStringUTFLength(env, arg1);
             char* fileName = calloc(len + 1, 1);
             (*env)->GetStringUTFRegion(env, arg1, 0, len, fileName);
             LOGG("ORIGINAL FILE NAME: %s\n", fileName);
             jint arg2 = 0;
             LOGI("calling original openFileOutput \n");
-            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, arg1, arg2, NULL);    
+            */
+            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, javaArgs);    
         }
         else{
             res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, NULL);    
