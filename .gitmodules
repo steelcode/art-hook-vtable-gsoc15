@@ -1,0 +1,3 @@
+[submodule "adbi"]
+	path = adbi
+	url = https://github.com/crmulliner/adbi.git
