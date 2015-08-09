@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 
-HIJACK="hijack/libs/armeabi/hijack"
+HIJACK="adbi/hijack/libs/armeabi/hijack"
 ARTHOOK="hooking/libs/armeabi/libarthook.so"
 DEXFILE="examples/target.dex"
 SCRIPTDIR="scripts"
@@ -45,7 +45,7 @@ adb_push_files (){
 	command adb  push $DEXFILE $DESTDIR
 	check_ret
 
-    for file in `ls $SCRIPTDIR/*.sh`;
+    for file in `ls $SCRIPTDIR/*`;
     do
         command adb push $file $DESTDIR
     done
@@ -61,4 +61,6 @@ check_adb
 check_file
 adb_push_files
 
-echo "all files has been pushed on the device!"
+echo -e "\n"
+echo -e "all files has been pushed to the device!"
+echo -e "now connect to the device/emu, \"cd /data/local/tmp\" and \"sh ./init.sh\" \n"

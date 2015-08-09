@@ -1,5 +1,22 @@
 #!/system/xbin/bash
 
+
+function print_error_and_exit
+{
+    echo -e $1
+    exit 1
+}
+
+
+function check_dependencies
+{
+    echo "check dependencies"
+    if [ ! -f "/system/xbin/awk" ]; then
+        print_error_and_exit "awk not found, please install busybox in /system/xbin/"
+    fi
+}
+check_dependencies
+
 #esegue inject
 #-p -l  -d -z -s 
 BIN=/data/local/tmp/hijack 

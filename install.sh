@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# we need to pass argument to push_patch_code.sh
+#
 
 DIR=`pwd`
 
@@ -26,16 +27,16 @@ check_ret () {
 
 print_error_and_exit()
 {
-    echo $1
+    echo -e $1
     exit 1
 }
 
 check_dependencies()
 {
     printf "checking dependencies...\n"
-    path_to_executable=$(which adb)
-    if [ -x "$path_to_executable" ] ; then
-        printf "It's here: $path_to_executable \n"
+    path_to_sdk=$(which adb)
+    if [ -x "$path_to_sdk" ] ; then
+        printf "It's here: $path_to_sdk \n"
     else
         print_error_and_exit "please, add Android SDK to your PATH \n"
     fi
@@ -51,11 +52,11 @@ check_first_run()
 {
     printf "check \n"
     if [ ! -f "$DIR/.first_run.no" ] ; then
-        printf "this is the first run, adbi will be compiled too \n"
+        echo -e "this is the first run, adbi will be compiled too \n"
         touch "$DIR/.first_run.no"
         IS_FIRST_RUN=true
     else
-        printf "this is not the first run! \n"
+        echo -e "this is not the first run! \n"
     fi
 }
 
@@ -66,7 +67,6 @@ compile_all()
        cd adbi/
        #sh clean.sh
        sh build.sh
-       IS_FIRST_RUN=false
     fi
     
     cd $DIR
@@ -79,10 +79,10 @@ compile_all()
 
 push_file()
 {
-    echo "\t pushing: $1 \n"
+    echo -e "\t pushing: $1 \n"
     adb push $1 /data/local/tmp
     check_ret
-    echo "\t ok..."
+    echo -e "\t ok..."
 }
 
 push_to_device()
@@ -106,9 +106,13 @@ main()
     check_first_run
     compile_all
     push_to_device
-
-    sh pusher.sh
+    
+    if [ "$IS_FIRST_RUN" = true ]; then
+        bash pusher.sh
+    fi
     
 }
 
 main
+
+# EOF
