@@ -35,3 +35,7 @@
 
 .*.swp
 *.NO
+
+adbi/
+.idea/
+CMakeLists.txt
