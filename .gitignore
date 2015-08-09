@@ -34,7 +34,7 @@
 
 
 .*.swp
-*.NO
+.*.no
 
 adbi/
 .idea/
