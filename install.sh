@@ -8,7 +8,7 @@ IS_FIRST_RUN=false
 
 ARTHOOK_SO="$DIR/hooking/libs/armeabi/libarthook.so"
 
-HIJACK_BIN="$DIR/hijack/libs/armeabi/hijack"
+HIJACK_BIN="$DIR/adbi/hijack/libs/armeabi/hijack"
 
 
 usage(){
@@ -65,13 +65,13 @@ compile_all()
     cd $DIR
     if [ "$IS_FIRST_RUN" = true ] ; then
        cd adbi/
-       #sh clean.sh
+       sh clean.sh
        sh build.sh
     fi
     
     cd $DIR
 
-    #sh clean.sh
+    sh clean.sh
     sh build.sh
     
     printf "\n ALL DONE ! \n"    

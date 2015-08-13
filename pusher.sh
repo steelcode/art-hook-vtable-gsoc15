@@ -3,7 +3,7 @@
 
 HIJACK="adbi/hijack/libs/armeabi/hijack"
 ARTHOOK="hooking/libs/armeabi/libarthook.so"
-DEXFILE="examples/target.dex"
+DEXFILE="examples/classes.dex"
 SCRIPTDIR="scripts"
 
 DESTDIR="/data/local/tmp"
