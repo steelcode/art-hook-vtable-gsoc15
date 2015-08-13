@@ -24,6 +24,41 @@ int isLollipop(JNIEnv *env)
     else return 0;
 }
 
+char* parseSignature(char* sig){
+    arthooklog("mia signature: %s\n", sig);
+    char* p = sig;
+    char* result = calloc(strlen(sig)+1, sizeof(char));
+
+
+    char* copy = calloc(strlen(sig)+1, sizeof(char));
+    strcpy(copy, sig);
+
+    char* token = strtok(copy, "( )");
+    arthooklog("mio token: %s \n", token);
+
+    char* obj = strtok(token, ";");
+    arthooklog("trovato obj: %s \n", obj);
+
+    while( *p ){
+        size_t counter = 0;
+        arthooklog("char: %c \n", *p);
+        if(*p == ')')
+            break;
+        if(p[counter] == 'L'){
+            arthooklog("trovata classe!!\n");
+            strcat(result, "L|");
+            arthooklog("result vale: %s \n", result);
+            char* res = strchr(p, ';');
+            p = res;
+            counter = (res - sig + 1);
+        }
+        if(p[counter] == 'I'){
+            strcat(result, "I|");
+        }
+        *p++;
+    }
+    return result;
+}
 
 jclass _findClass(JNIEnv* env, char* clsname)
 {
@@ -80,20 +115,6 @@ void set_pointer(unsigned int *s, unsigned int d){
 }
 
 
-void hookDevId(JNIEnv *env, jobject rawcls, int lollipop)
-{
-
-   // hook_t* res = create_hook(env,  char *clsname, HOOKM, HOOKMSIG, rawcls);
-/*
-    jclass cls = (*env)->GetObjectClass( rawcls );
-    jmethodID mid = (*env)->GetMethodID( cls, "getDeviceId", "()Ljava/lang/String;");
-
-    jclass hookcls = (*env)->FindClass(HOOKCLS);
-    jmethodID hookm = (*env)->GetMethodID( hookcls, "getDeviceId", "()Ljava/lang/String;");
-    analyze2((unsigned long) mid, (int) hookm, lollipop);
-    */
-
-}
 char * get_dev_id(JNIEnv *env, jobject context)
 {
     jclass cls = (*env)->FindClass(env, "android/context/Context");

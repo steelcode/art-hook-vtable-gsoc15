@@ -1,5 +1,5 @@
-#ifndef _ARTHOOK_TH_
-#define _ARTHOOK_TH_
+#ifndef ARTHOOK_T_H
+#define ARTHOOK_T_H
 #include <jni.h>
 #include "uthash.h"
 

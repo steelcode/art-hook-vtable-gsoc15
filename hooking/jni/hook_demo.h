@@ -1,8 +1,9 @@
-#include "arthook_t.h"
-#include "arthook_helper.h"
-#include "jni_wrappers.h"
-#include "utils.h"
+#ifndef HOOK_DEMO_H
+#define HOOK_DEMO_H
 
+#include "arthook_t.h"
+#include "arthook_bridge.h"
+#include "arthook_manager.h"
 
 typedef struct{
     char* cname;
@@ -16,6 +17,5 @@ typedef struct{
 
 
 int hook_demo_init(JNIEnv*);
-jobject get_dexloader();
-jint printStackTraceFromJava(JNIEnv* );
-void calldiocane(JNIEnv*, jobject );
+
+#endif

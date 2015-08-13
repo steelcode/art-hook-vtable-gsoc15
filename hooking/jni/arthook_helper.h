@@ -1,7 +1,11 @@
+#ifndef ARTHOOK_HELPER_H
+#define ARTHOOK_HELPER_H
+
 #include "arthook_t.h"
 #include "utils.h"
 #include "globals.h"
-
+#include "arthook_manager.h"
+#include "arthook_bridge.h"
 
 #define CLAZZ_OFF 0x8
 //#define ACCESS_FLAG_OFF 28
@@ -26,7 +30,10 @@ static unsigned int* searchInMemoryVtable(unsigned int , int , int );
 static unsigned int* searchInMemoryVmeths(unsigned int , int , int );
 int search_and_set(JNIEnv *, jobject , jobject ,  int);
 int search_and_set_str(JNIEnv* , char*, char* );
-jobject call_original_method(JNIEnv*, arthook_t*, jobject, jobject);
+jobject call_original_method(JNIEnv*, arthook_t*, jobject, jvalue*);
 void* hh_check_javareflection_call(JNIEnv *, jobject, jobject );
 void* callOriginalReflectedMethod(JNIEnv* env, jobject javaReceiver, arthook_t* tmp, jobject);
-jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz);
+jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject);
+
+
+#endif

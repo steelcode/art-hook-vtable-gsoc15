@@ -1,13 +1,21 @@
 #include "arthook_bridge.h"
 
+static jobject gDexLoader;
 
-jobject _callOriginalMethod(JNIEnv* env, jobject this, jstring jstr, jobject thiz, jstring arg1)
+jobject get_dexloader()
 {
-    LOGI(" %s thiz: %x, jstr: %x  \n", __PRETTY_FUNCTION__, thiz, jstr);
-    jobject gThiz = (*env)->NewGlobalRef(env, thiz);
-    jstring gStrArg = (jstring) (*env)->NewGlobalRef(env, arg1);
-    return hook_bridge_OriginalCall(env, jstr, gThiz, gStrArg);
+    return gDexLoader;
 }
+
+void set_dexloader(JNIEnv* env)
+{
+    jobject systemCL = getSystemClassLoader(env);
+    jobject dexloader  = createDexClassLoader(env, systemCL,  MYDEXDIR,  MYOPTDIR);
+    gDexLoader = (*env)->NewGlobalRef(env, dexloader);
+    jclass c = loadClassFromClassLoader(env, dexloader,"org/sid/arthookbridge/HookCls" );
+    jclass c2 = loadClassFromClassLoader(env, dexloader,"org/sid/arthookbridge/Utils" );
+}
+
 jobject _get_original_method(JNIEnv* env, jobject trashme, jstring hook_key)
 {
     LOGI("chiamato %s \n ",  __PRETTY_FUNCTION__ ); 
@@ -16,11 +24,66 @@ jobject _get_original_method(JNIEnv* env, jobject trashme, jstring hook_key)
     arthook_t* h = get_hook_by_key(key);
     if(!h) return NULL;
     void* asd = malloc(4);
-    LOGI("io valgo: %x \n", &h->original_meth_ID);
+    LOGI("io valgo: %x \n", (unsigned int) &h->original_meth_ID);
     memcpy(asd, &h->original_meth_ID, 4);
-    LOGI("ora valgo %x \n", asd);
+    LOGI("ora valgo %x \n", (unsigned int ) asd);
     return (jobject) (*env)->NewGlobalRef(env, asd);
     
+}
+jint printStackTraceFromJava(JNIEnv* env)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "printStackTraces", "()I");
+    jint res = (*env)->CallStaticIntMethod(env, test, mid);
+    return res;
+}
+jboolean callGetBoolean(JNIEnv* env, jobject javaArgs, int index)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "getBoolean", "([Ljava/lang/Object;I)Z");
+    jboolean res = (*env)->CallStaticIntMethod(env, test, mid, javaArgs, index);
+    return res;
+
+}
+jdouble callGetDouble(JNIEnv* env, jobject javaArgs, int index)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "getDouble", "([Ljava/lang/Object;I)D");
+    jdouble res = (*env)->CallStaticDoubleMethod(env, test, mid, javaArgs, index);
+    return res;
+
+}
+jfloat callGetFloat(JNIEnv* env, jobject javaArgs, int index)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "getFloat", "([Ljava/lang/Object;I)F");
+    jfloat res = (*env)->CallStaticFloatMethod(env, test, mid, javaArgs, index);
+    return res;
+
+}
+jlong callGetLong(JNIEnv* env, jobject javaArgs, int index)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "getLong", "([Ljava/lang/Object;I)J");
+    jlong res = (*env)->CallStaticFloatMethod(env, test, mid, javaArgs, index);
+    return res;
+
+}
+jint callGetInt(JNIEnv* env, jobject javaArgs, int index)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "getInt", "([Ljava/lang/Object;I)I");
+    jint res = (*env)->CallStaticIntMethod(env, test, mid, javaArgs, index);
+    return res;
+
+}
+jobject callGetObj(JNIEnv* env, jobject javaArgs, int index)
+{
+    jclass test = findClassFromClassLoader(env,gDexLoader,"org/sid/arthookbridge/Utils" );
+    jmethodID mid = (*env)->GetStaticMethodID(env, test, "getObj", "([Ljava/lang/Object;I)Ljava/lang/Object;");
+    jobject res = (*env)->CallStaticObjectMethod(env, test, mid, javaArgs, index);
+    return (*env)->NewGlobalRef(env,res);
+
 }
 
 //DEPRECATED
@@ -29,7 +92,7 @@ jobject hook_bridge_OriginalCall
 {
     char *key = getCharFromJstring(env, hook_key);
     LOGI("dentro hooks manager, cerco : %s \n", key);
-    arthook_t* myhook = get_hook_by_key(key);
+    arthook_t* myhook = (arthook_t*) get_hook_by_key(key);
     if(myhook == NULL)
         return NULL;
     return  call_original_method(env, myhook, o, arg1);    
@@ -37,9 +100,6 @@ jobject hook_bridge_OriginalCall
 
 static JNINativeMethod artHookMethods[] = {
     /* name, signature, funcPtr */ 
-    //DEPRECATED
-    { "callOriginalMethod", "(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",
-            (void*) _callOriginalMethod },
     //UNUSED
     {"get_original_method", "(Ljava/lang/String;)Ljava/lang/Object;", (void*) _get_original_method },
 };

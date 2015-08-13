@@ -1,10 +1,11 @@
+#ifndef ARTHOOK_MANAGER_H
+#define ARTHOOK_MANAGER_H
+
 #include <sys/types.h>
 #include <pthread.h>
-#include <jni.h>
 #include "utils.h"
 #include "hook_demo.h"
 #include "globals.h"
-#include "arthook_t.h"
 
 
 int arthook_manager_init(JNIEnv*);
@@ -20,5 +21,5 @@ extern int is_method_in_hashtable();
 extern void* get_method_from_hashtable(unsigned int* target);
 
 extern void print_hashtable();
-
+#endif
 

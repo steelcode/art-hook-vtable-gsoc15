@@ -1,5 +1,5 @@
-#ifndef _ARTSTUFFH_
-#define _ARTSTUFFH_
+#ifndef ARTSTUFF_H
+#define ARTSTUFF_H
 
 #include <stdio.h>
 #include <stdlib.h>

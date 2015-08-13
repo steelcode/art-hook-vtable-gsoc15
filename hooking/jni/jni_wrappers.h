@@ -1,5 +1,6 @@
-#ifndef _JNIWRAPPERSH_
-#define _JNIWRAPPERSH_
+#ifndef JNI_WRAPPERS_H
+
+#define JNI_WRAPPERS_H
 
 #include "utils.h"
 #include "globals.h" 

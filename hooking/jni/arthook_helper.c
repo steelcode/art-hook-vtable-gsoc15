@@ -11,7 +11,7 @@
 /*
    set the hook, pointed by arthook_t*, in memory.
    */
-int set_hook(JNIEnv *env, arthook_t *h)
+static int set_hook(JNIEnv *env, arthook_t *h)
 {
     arthooklog("set_hook\n");
     unsigned int *res = searchInMemoryVtable( (unsigned int) h->original_meth_ID, (unsigned int) h->original_meth_ID, isLollipop(env));
@@ -111,9 +111,7 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
     return tmp;
 }
 
-
-void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject javaReceiver)
-{
+void* get_artmethod_from_reflection(JNIEnv* env, jobject javaMethod){
     LOGI("chiamato %s \n", __PRETTY_FUNCTION__);
     jclass c = (*env)->FindClass(env, "java/lang/reflect/AbstractMethod");
     LOGI("trovata abstractmethod %x \n", c);
@@ -123,11 +121,6 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
 
     jfieldID fid = (*env)->GetFieldID(env, c, "artMethod", "Ljava/lang/reflect/ArtMethod;");
     LOGI("trovato fieldID %x \n", fid);
-
-    // devo prendere l'offset dal fid (sta a +24)
-    // e applicarlo al javamethod
-    //
-
     unsigned char* myfid = fid;
     LOGI("primo : %x = %x , dopo sum: %x \n", myfid, *myfid, myfid+0x14);
     unsigned char* off = (unsigned char*) (myfid + 0x14);
@@ -141,6 +134,17 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
 
     LOGI("mio metodo target: %x = %x \n", mymid, *mymid);
 
+    if(mymid)
+        return mymid;
+    else
+        return NULL;
+}
+
+void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject javaReceiver)
+{
+    unsigned int* mymid = get_artmethod_from_reflection(env,javaMethod);
+    if(! mymid)
+        return NULL;
     int res = is_method_in_hashtable(mymid);
     void* ret = NULL;
     if(res){
@@ -148,10 +152,24 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
         return tmp;
     }
 
-    return res;
+
+    //porcodio
+    jclass xxx = (*env)->FindClass(env, "android/content/Context");
+    jmethodID xxxmid = (*env)->GetMethodID(env, xxx, "openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;");
+    xxx = (*env)->FindClass(env, "android/app/ContextImpl");
+    jmethodID xxxmid2 = (*env)->GetMethodID(env, xxx, "openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;");
+
+    xxx = (*env)->FindClass(env, "android/app/Activity");
+    jmethodID xxxmid3 = (*env)->GetMethodID(env, xxx, "openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;");
+    unsigned int *pi = xxxmid;
+    arthooklog("porcodio !!! forse cercavi: %x = %x\n", xxxmid3, xxxmid2);
+
+    return NULL;
 }
 
-void tryToUnbox(JNIEnv* env, unsigned int* javaArgs)
+//i must try with array reflection
+
+static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,jobject thiz, bool call_patchmeth)
 {
     arthooklog("chiamato trytounbox con : %x \n", javaArgs);
     int * p = (int*) *javaArgs + 0x2;
@@ -159,25 +177,162 @@ void tryToUnbox(JNIEnv* env, unsigned int* javaArgs)
 
     arthooklog("trovata size array: %d a %x \n", *p, p);
 
-    calldiocane(env, (jobject) javaArgs);
+    //calldiocane(env, (jobject) javaArgs);
+    jobjectArray joa = (jobjectArray) javaArgs;
 
+    int num = (*env)->GetArrayLength(env, joa);
+
+    arthooklog("prova array con numero elementi: %d !!!! \n", num);
+
+    jobject tmp;
+    int counter = 0;
+    int index = 0;
+
+    if(call_patchmeth)
+        num += 1;
+
+    jvalue* args = calloc(num, sizeof(jvalue));
+
+    char* res = parseSignature(hook->msig);
+
+    char* tok = strtok(res, "|");
+
+    jstring s;
+    jobject o;
+    jint i;
+    jdouble d;
+    jfloat f;
+    jboolean z;
+    jlong j;
+
+    if(call_patchmeth) {
+        args[0].l = thiz;
+        counter++;
+    }
+
+    while(tok != NULL){
+        arthooklog("trovato : %s\n", tok);
+        if(*tok == 'L'){
+            o = callGetObj(env, joa, (jint) index) ;
+            arthooklog("gestisco un Object %p  = %x, counter = %d\n", o, o, counter);
+            args[counter].l = (*env)->NewGlobalRef(env, o);
+            counter++;
+            index++;
+        }
+        else if(*tok == 'I'){
+            i = callGetInt(env, joa, (jint) index);
+            arthooklog("gestisco un intero %p , counter = %d\n", i, counter);
+            arthooklog("trovato int: %d\n", i);
+            args[counter].i = i;
+            counter++;
+            index++;
+        }
+        else if(*tok == 'D'){
+            arthooklog("gestisco un double, counter = %d\n", counter);
+            d = callGetDouble(env, joa, (jint) index);
+            arthooklog("trovato double: %d\n", i);
+            args[counter].d = d;
+            counter++;
+            index++;
+        }
+        else if(*tok == 'J'){
+              arthooklog("gestisco un long, counter = %d\n", counter);
+            j = callGetLong(env, joa, (jint) index);
+            arthooklog("trovato long: %d\n", i);
+            args[counter].j = j;
+            counter++;
+            index++;
+        }
+        else if(*tok == 'Z'){
+              arthooklog("gestisco un boolean, counter = %d\n", counter);
+            z = callGetBoolean(env, joa, (jint) index);
+            arthooklog("trovato int: %d\n", i);
+            args[counter].z = z;
+            counter++;
+            index++;
+        }
+        tok = strtok(NULL, "|");
+    }
+
+    return args;
+/*
+    jclass t = (*env)->GetObjectClass(env, thiz);
+    jsize len = (*env)->GetStringUTFLength(env, s);
+    char* arg1 = calloc(len+1, 1);
+    (*env)->GetStringUTFRegion(env, s, 0, len, arg1);
+    arthooklog("creo filename: %s\n", arg1);
+    int arg2 = 0;
+    free(arg1);
+
+    arthooklog("debug args: t = %x , thiz = %x, mid = %x, arg1 = %x , arg2= %x \n", t, thiz, hook->original_meth_ID, args[0].l, args[1].i);
+    jobject ress = NULL;
+
+
+    ress = (*env)->CallNonvirtualObjectMethod(env, thiz, t, hook->original_meth_ID, *args);
+
+    arthooklog("fatta la chiamata da dentro trytounbox\n");
+    if(ress != NULL)
+       return (*env)->NewGlobalRef(env, ress);
+    return NULL;
+*/
 }
 
-void* callOriginalReflectedMethod(JNIEnv* env, jobject javaReceiver, arthook_t* tmp, jobject javaArgs){
-    LOGI("trovato hook su : %s \n", tmp->clsname);
-    tryToUnbox( env, (unsigned int) javaArgs);
-    return call_original_method(env, tmp, javaReceiver, javaArgs);
+void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jobject javaArgs){
+    arthooklog("trovato hook su : %s \n", hook->clsname);
+    arthooklog("mia signature: %s\n", hook->msig);
+
+    jvalue* args;
+    jobject res = NULL;
+
+    if(javaArgs)
+         args =  tryToUnbox( env, hook, (unsigned int) javaArgs, thiz, false);
+    else{
+        jclass t = (*env)->GetObjectClass(env, thiz);
+        res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, hook->original_meth_ID);
+    }
+    if(args){
+        jclass t = (*env)->GetObjectClass(env, thiz);
+        res = (*env)->CallNonvirtualObjectMethodA(env, thiz, t, hook->original_meth_ID,args);
+
+        arthooklog("fatta la chiamata da dentro trytounbox\n");
+        if(res != NULL)
+           return (*env)->NewGlobalRef(env, res);
+    }
+
+    //return call_original_method(env, tmp, javaReceiver, myargs);
 }
 
-jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz){
+//XXX: devo  gestire gli argomenti
+jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject javaArgs){
 
     LOGI("!!!!!!!!!!!!!!! call patch method from reflection, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
 
-    return (*env)->CallStaticObjectMethod(env, h->hook_cls, h->hook_meth_ID, thiz);    
+    jvalue* args;
+    jobject res = NULL;
+
+    if(javaArgs){
+        args = tryToUnbox(env, h, (unsigned int*) javaArgs, thiz, true);
+    }
+    else{
+        res = (*env)->CallStaticObjectMethod(env, h->hook_cls, h->hook_meth_ID, thiz);
+        return (*env)->NewGlobalRef(env, res);
+    }
+    if(args){
+        jclass t = (*env)->GetObjectClass(env, thiz);
+        res = (*env)->CallStaticObjectMethodA(env, h->hook_cls, h->hook_meth_ID, args);
+
+        arthooklog("fatta la chiamata da dentro trytounbox\n");
+        return (*env)->NewGlobalRef(env, res);
+    }
+    else{
+        return NULL;
+    }
+
+//    return (*env)->CallStaticObjectMethod(env, h->hook_cls, h->hook_meth_ID, thiz);
 }
 
 // used by reflection calls
-jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject javaArgs) // jstring arg1)
+jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz,jvalue* myargs) // jstring arg1)
 {
 
     LOGI("!!!!!!!!!!!!!!! call original, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
@@ -200,7 +355,7 @@ jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject ja
             jint arg2 = 0;
             LOGI("calling original openFileOutput \n");
             */
-            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, javaArgs);    
+            res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, *myargs);
         }
         else{
             res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, h->original_meth_ID, NULL);    
@@ -317,7 +472,6 @@ static unsigned int* searchInMemoryVmeths(unsigned int start, int gadget, int lo
 
 /*
    Wrapper function
-   */
 int search_and_set(JNIEnv *env, jobject c1, jobject c2, int lollipop){
     int changed = 0;
     LOGI("pointer to obj: %p e %p\n", c1, c2);
@@ -349,7 +503,7 @@ int search_and_set(JNIEnv *env, jobject c1, jobject c2, int lollipop){
     breakMe();
     return changed;
 }
-
+*/
 /*
    unsigned int revgadget;
    revgadget =  ((gadget>>24)&0xff) | // move byte 3 to byte 0

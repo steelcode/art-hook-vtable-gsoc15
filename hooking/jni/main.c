@@ -20,11 +20,8 @@
 #include "base.h"
 
 #include "artstuff.h"
-#include "arthook_t.h"
 #include "arthook_manager.h"
-#include "jni_wrappers.h"
-#include "utils.h"
-#include "globals.h"
+
 
 // this file is going to be compiled into a thumb mode binary
 
@@ -37,8 +34,6 @@ char artlogfile[]  = "/data/local/tmp/arthook.log";
 
 JavaVM* vms = NULL;
 
-// for demo code only
-static int counter;
 
 // arm version of hook
 extern int my_epoll_wait_arm(int epfd, struct epoll_event *events, int maxevents, int timeout);
@@ -57,25 +52,14 @@ void artlogmsgtofile(char* msg){
 	    write(fp, msg, strlen(msg));
 	    close(fp);
     }
-
 }
+
 void* set_arthooklogfunction(void* func){
     void* old = log_function;
     log_function = func;
     return old;
 }
 
-/*
-JNIEXPORT jstring JNICALL Java_test_sid_org_ndksample_HookCls_callOriginalMethod
-  (JNIEnv * env, jstring s)
-{
-   return hooks_manager_OriginalCall(env, s);
-}
-*/
-jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-    return JNI_VERSION_1_6;
-}
 
 void init_hook()
 {
@@ -124,7 +108,7 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
             // we have to call the "patch method"
             // 
             log("!!! CHIAMO IL PATCH METHOD !!!  \n");            
-            return call_patch_method(th_env, (arthook_t*) checkcalledmethod, javaReceiver);
+            return call_patch_method(th_env, (arthook_t*) checkcalledmethod, javaReceiver, javaArgs);
         }
         
     }
@@ -141,20 +125,20 @@ int my_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeo
 
     hook_precall(&eph);
 	int res = orig_epoll_wait(epfd, events, maxevents, timeout);
-	if (counter) {
+	/*if (counter) {
 		hook_postcall(&eph);
 		log("epoll_wait() called\n");
 		counter--;
 		if (!counter)
 			log("removing hook for epoll_wait()\n");
 	}
+	*/
     init_hook();
 	return res;
 }
 
 void my_init(void)
 {
-	counter = 0;
 
     // adbi and arthook log functions
 	set_logfunction(my_log);

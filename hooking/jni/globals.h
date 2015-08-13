@@ -1,7 +1,12 @@
 #ifndef _GLOBALSH_
 #define _GLOBALSH_
 
+#include <jni.h>
 #include "arthook_t.h"
+
+#define bool int
+#define true 1
+#define false 0
 
 #define DEBUG 1
 

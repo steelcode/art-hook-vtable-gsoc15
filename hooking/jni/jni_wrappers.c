@@ -81,7 +81,7 @@ jclass findClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetNa
     LOGI("trovato meth findClass: %x \n", findClass);
     jstring name = (*env)->NewStringUTF(env,targetName);   
     jclass res = (*env)->CallObjectMethod(env,classLoader,findClass,name);
-    LOGI("trovata Hookcls class: %x \n" , res);
+    LOGI("trovata Hookcls class: %p\n" , res);
     return (jclass) (*env)->NewGlobalRef(env, res) ; 
 }
 

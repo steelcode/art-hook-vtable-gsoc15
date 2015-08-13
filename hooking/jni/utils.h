@@ -1,8 +1,7 @@
-#ifndef _UTILSH_
-#define _UTILSH_
+#ifndef UTILS_H
+#define UTILS_H
 
 #include <android/log.h>
-#include <jni.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -11,7 +10,7 @@
 #include "hook.h"
 #include "globals.h"
 #include "uthash.h"
-
+#include "jni_wrappers.h"
 
 #undef NELEM
 #define NELEM(x)            (sizeof(x)/sizeof(*(x)))
@@ -48,5 +47,5 @@ jclass _findClass(JNIEnv* , char* );
 jobject createInstanceFromClsName(JNIEnv* , char* );
 jobject createInstanceFromJClsName(JNIEnv* , jstring );
 char* getCharFromJstring(JNIEnv* , jstring );
-
+char* parseSignature(char* sig);
 #endif
