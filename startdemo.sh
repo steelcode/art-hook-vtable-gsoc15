@@ -7,7 +7,7 @@ adb install -r app.apk
 
 echo -e "starting testing app"
 
-adb shell "am start -W -n org.sid.testingmalwareapp/.MainActivity"
+adb shell "am start -D -W -n org.sid.testingmalwareapp/.MainActivity"
 
 
 MYPID=`adb shell ps | grep testing | awk '{print $2}'`

@@ -70,12 +70,12 @@ void init_hook()
 }
 
 void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs){
-    log("!!! dentro my invoke method, receiver vale: 0x%08x, javamethod : 0x%08x \n", javaReceiver, javaMethod);
+    log("!!! dentro my invoke method, receiver vale: 0x%08x, javamethod : 0x%08x \n", (unsigned int) javaReceiver,  (unsigned int) javaMethod);
     
-    void* checkcalledmethod = 1;
+    void* checkcalledmethod = (void*) 1;
     void* res = NULL;
     JNIEnv* th_env = get_jnienv();
-    log("env vvale: %x \n", th_env);
+    log("env vvale: %p \n", th_env);
     jint checkstack = printStackTraceFromJava(th_env);
 
     // check if an hooked method is the target of the reflection call

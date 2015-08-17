@@ -3,8 +3,6 @@
 
    
 */
-
-
 #include "arthook_helper.h"
 
 
@@ -74,23 +72,20 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
         LOGI(" CREATE HOOK DI TIPO SMS \n");    
         jclass cls = (*env)->FindClass(env, "android/telephony/SmsManager");
         jfieldID field = (*env)->GetStaticFieldID(env, cls, "sInstance", "Landroid/telephony/SmsManager;");
-        LOGI("preso static fiels sINstance: %x \n" , field);
+        LOGI("preso static fiels sINstance: %p \n" , field);
         jobject o =  (*env)->GetStaticObjectField(env, cls, field);
-        LOGI("preso static obj: %x \n", o);
+        LOGI("preso static obj: %p \n", o);
         jclass target =(*env)->GetObjectClass(env, o);
-        LOGI("preso CONFRONTAMI class from obj: 0x%08x\n", target);
         target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
-        LOGI("preso target method id sms: %x \n", target_meth_ID);
         gTarget = (jclass) (*env)->NewGlobalRef(env, target);
-        LOGI("target1 class: 0x%08x, target methodid 0x%08x, \n", target, target_meth_ID);
 
     }
     else{
         target = (*env)->FindClass(env, clsname);
-        LOGI("TARGET CLAZZ %s at: %x \n", clsname, target);
+        LOGI("TARGET CLAZZ %s at: %p \n", clsname, target);
         gTarget = (jclass) (*env)->NewGlobalRef(env, target);
         target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
-        LOGI("TARGET METHODID is %d \n", target_meth_ID);
+        //LOGI("TARGET METHODID is %d \n", target_meth_ID);
         //try to resolve hook class and method here
         //test = (*env)->FindClass(env, "java/lang/Object");
         //LOGI("trovata porcodio di classe %x \n", test);
@@ -114,25 +109,25 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
 void* get_artmethod_from_reflection(JNIEnv* env, jobject javaMethod){
     LOGI("chiamato %s \n", __PRETTY_FUNCTION__);
     jclass c = (*env)->FindClass(env, "java/lang/reflect/AbstractMethod");
-    LOGI("trovata abstractmethod %x \n", c);
+    LOGI("trovata abstractmethod %p \n", c);
 
     jclass c1 = (*env)->FindClass(env, "java/lang/reflect/Method");
-    LOGI("trovata method clazz : %x \n", c1);
+    LOGI("trovata method clazz : %p \n", c1);
 
     jfieldID fid = (*env)->GetFieldID(env, c, "artMethod", "Ljava/lang/reflect/ArtMethod;");
-    LOGI("trovato fieldID %x \n", fid);
-    unsigned char* myfid = fid;
-    LOGI("primo : %x = %x , dopo sum: %x \n", myfid, *myfid, myfid+0x14);
+    LOGI("trovato fieldID %p \n", fid);
+    unsigned char* myfid = (unsigned char*) fid;
+    //LOGI("primo : %x = %x , dopo sum: %x \n", myfid, *myfid, myfid+0x14);
     unsigned char* off = (unsigned char*) (myfid + 0x14);
-    LOGI("!!! offset vale: %x %x \n", off, *off);
+    //LOGI("!!! offset vale: %x %x \n", off, *off);
 
     unsigned int* myclazz = javaMethod;
 
-    LOGI("my clazz: %x = %x \n", myclazz, *myclazz);
+    //LOGI("my clazz: %x = %x \n", myclazz, *myclazz);
 
     unsigned int* mymid = (unsigned int*) (*myclazz + *off);
 
-    LOGI("mio metodo target: %x = %x \n", mymid, *mymid);
+    //LOGI("mio metodo target: %x = %x \n", mymid, *mymid);
 
     if(mymid)
         return mymid;
@@ -161,8 +156,8 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
 
     xxx = (*env)->FindClass(env, "android/app/Activity");
     jmethodID xxxmid3 = (*env)->GetMethodID(env, xxx, "openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;");
-    unsigned int *pi = xxxmid;
-    arthooklog("porcodio !!! forse cercavi: %x = %x\n", xxxmid3, xxxmid2);
+    unsigned int *pi = (unsigned int*) xxxmid;
+    arthooklog("porcodio !!! forse cercavi: %p = %p\n", xxxmid3, xxxmid2);
 
     return NULL;
 }
@@ -171,11 +166,11 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
 
 static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,jobject thiz, bool call_patchmeth)
 {
-    arthooklog("chiamato trytounbox con : %x \n", javaArgs);
+    arthooklog("chiamato trytounbox con : %p \n", javaArgs);
     int * p = (int*) *javaArgs + 0x2;
     
 
-    arthooklog("trovata size array: %d a %x \n", *p, p);
+    arthooklog("trovata size array: %d a %p \n", *p, p);
 
     //calldiocane(env, (jobject) javaArgs);
     jobjectArray joa = (jobjectArray) javaArgs;
@@ -214,14 +209,14 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
         arthooklog("trovato : %s\n", tok);
         if(*tok == 'L'){
             o = callGetObj(env, joa, (jint) index) ;
-            arthooklog("gestisco un Object %p  = %x, counter = %d\n", o, o, counter);
+            arthooklog("gestisco un Object %p  = %x, counter = %d\n", o, (unsigned int) o, counter);
             args[counter].l = (*env)->NewGlobalRef(env, o);
             counter++;
             index++;
         }
         else if(*tok == 'I'){
             i = callGetInt(env, joa, (jint) index);
-            arthooklog("gestisco un intero %p , counter = %d\n", i, counter);
+            arthooklog("gestisco un intero %d , counter = %d\n", i, counter);
             arthooklog("trovato int: %d\n", i);
             args[counter].i = i;
             counter++;
@@ -285,7 +280,7 @@ void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jo
     jobject res = NULL;
 
     if(javaArgs)
-         args =  tryToUnbox( env, hook, (unsigned int) javaArgs, thiz, false);
+         args =  tryToUnbox( env, hook, (unsigned int*) javaArgs, thiz, false);
     else{
         jclass t = (*env)->GetObjectClass(env, thiz);
         res = (*env)->CallNonvirtualObjectMethod(env, thiz, t, hook->original_meth_ID);
@@ -305,7 +300,7 @@ void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jo
 //XXX: devo  gestire gli argomenti
 jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject javaArgs){
 
-    LOGI("!!!!!!!!!!!!!!! call patch method from reflection, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
+    //LOGI("!!!!!!!!!!!!!!! call patch method from reflection, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
 
     jvalue* args;
     jobject res = NULL;
@@ -335,7 +330,7 @@ jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject javaA
 jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz,jvalue* myargs) // jstring arg1)
 {
 
-    LOGI("!!!!!!!!!!!!!!! call original, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
+    //LOGI("!!!!!!!!!!!!!!! call original, obj: %x ,  cls: %x method: %x, key: %s \n", thiz, h->original_cls, h->original_meth_ID, h->key);
 
     jobject res = NULL;
 
@@ -345,7 +340,7 @@ jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz,jvalue* mya
     }
     else{
         jclass t = (*env)->GetObjectClass(env, thiz);
-        LOGI("original  cls: %x\n", t);
+        LOGI("original  cls: %p\n", t);
         if(strstr(h->key, "openFileOutput")) {
             /*
             jsize len = (*env)->GetStringUTFLength(env, arg1);
@@ -373,7 +368,7 @@ jobject call_original_method(JNIEnv* env, arthook_t* h, jobject thiz,jvalue* mya
 */
 static unsigned int* searchInMemoryVtable(unsigned int start, int gadget, int lollipop){
     LOGI("------------------------------------------------------------------------------\n");
-    LOGI("start VTABLE : 0x%08x, gadget 0x%08x, lollipop = %d \n", start, gadget, lollipop);
+    //LOGI("start VTABLE : 0x%08x, gadget 0x%08x, lollipop = %d \n", start, gadget, lollipop);
     unsigned int i = 0;
     unsigned int* pClazz;
     unsigned int* pAccess_flags;
@@ -386,22 +381,22 @@ static unsigned int* searchInMemoryVtable(unsigned int start, int gadget, int lo
         pClazz = (unsigned int*) (start + LOLLIPOP_CLAZZ_OFF);
         vtable =  (unsigned int*) ((*pClazz) +  LOLLIPOP_VMETHODS_OFF);
         vmethods =  (unsigned int*) ((*pClazz) +  LOLLIPOP_VMETHODS_OFF);
-        LOGI("LOLLIPOP clazz: 0x%08x, * = 0x%08x -> vtable=0x%08x, * = 0x%08x, vmethods = 0x%08x, * = 0x%08x \n", pClazz , *pClazz, vtable, *vtable, vmethods, *vmethods );
+        //LOGI("LOLLIPOP clazz: 0x%08x, * = 0x%08x -> vtable=0x%08x, * = 0x%08x, vmethods = 0x%08x, * = 0x%08x \n", pClazz , *pClazz, vtable, *vtable, vmethods, *vmethods );
 
     }
     //kitkat 4.4.4 with art offsets
     else{
         pClazz = (unsigned int*) (start + CLAZZ_OFF);
         pAccess_flags = (unsigned int*) (start + ACCESS_FLAG_OFF);
-        LOGI("access flag: %d \n", (*pAccess_flags & 0xFFFF) );
+        //LOGI("access flag: %d \n", (*pAccess_flags & 0xFFFF) );
         //*pAccess_flags = *pAccess_flags | kAccStatic; // set method static
         //LOGI("access flag metodo: %d \n", (*pAccess_flags & 0xFFFF) );        
         vtable =  (unsigned int*) ((*pClazz) + VTABLE_OFF);
         vmethods_len = (unsigned int*) ((*vtable) + VMETHS_LEN_OFF);
-        LOGI("vmethods len: %zd \n", *vmethods_len);
+        //LOGI("vmethods len: %zd \n", *vmethods_len);
 
     }
-    LOGI("clazz: 0x%08x, * = 0x%08x [] vtable=0x%08x, * = 0x%08x \n", pClazz , *pClazz, vtable, *vtable);
+    //LOGI("clazz: 0x%08x, * = 0x%08x [] vtable=0x%08x, * = 0x%08x \n", pClazz , *pClazz, vtable, *vtable);
     if(!vtable) return 0;
     unsigned char *g2 = (unsigned char*) &gadget; 
     unsigned char *p = (unsigned char*)  *vtable; 
@@ -413,7 +408,7 @@ static unsigned int* searchInMemoryVtable(unsigned int start, int gadget, int lo
         //LOGI("check p 0x%08x and gadget 0x%08x \n",p, gadget);
         if(! memcmp(p, g2, 4 )){
             unsigned int* found_at = (unsigned int*) (*vtable + i) ;
-            LOGI("target VTABLE: 0x%08x at 0x%08x. vtable = %x, bytes = %d \n", gadget, found_at, *vtable, i);
+            //LOGI("target VTABLE: 0x%08x at 0x%08x. vtable = %x, bytes = %d \n", gadget, found_at, *vtable, i);
             //changed = 1;
             return found_at;
         }
@@ -425,7 +420,7 @@ static unsigned int* searchInMemoryVtable(unsigned int start, int gadget, int lo
 }
 
 static unsigned int* searchInMemoryVmeths(unsigned int start, int gadget, int lollipop){
-    LOGI("start VMETHODS: 0x%08x, gadget 0x%08x, lollipop = %d \n", start, gadget, lollipop);
+    //LOGI("start VMETHODS: 0x%08x, gadget 0x%08x, lollipop = %d \n", start, gadget, lollipop);
     unsigned int i = 0;
     unsigned int *pClazz;
     unsigned int* pAccess_flags;
@@ -436,18 +431,18 @@ static unsigned int* searchInMemoryVmeths(unsigned int start, int gadget, int lo
         pClazz = (unsigned int*) (start + LOLLIPOP_CLAZZ_OFF);
         vtable =  (unsigned int*) ((*pClazz) +  LOLLIPOP_VMETHODS_OFF);
         vmethods =  (unsigned int*) ((*pClazz) +  LOLLIPOP_VMETHODS_OFF);
-        LOGI("LOLLIPOP clazz: 0x%08x, * = 0x%08x -> vtable=0x%08x, * = 0x%08x, vmethods = 0x%08x, * = 0x%08x \n", pClazz , *pClazz, vtable, *vtable, vmethods, *vmethods );
+        //LOGI("LOLLIPOP clazz: 0x%08x, * = 0x%08x -> vtable=0x%08x, * = 0x%08x, vmethods = 0x%08x, * = 0x%08x \n", pClazz , *pClazz, vtable, *vtable, vmethods, *vmethods );
     }
     //kitkat 4.4.4 with art offsets
     else{
         pClazz = (unsigned int*) (start + CLAZZ_OFF);
         pAccess_flags = (unsigned int*) (start + ACCESS_FLAG_OFF);
-        LOGI("access flag metodo: %x \n", *pAccess_flags & 0xFFFF );
+        //LOGI("access flag metodo: %x \n", *pAccess_flags & 0xFFFF );
         //*pAccess_flags = *pAccess_flags | kAccStatic; // set method static
         vtable =  (unsigned int*) ((*pClazz) + VTABLE_OFF);
         vmethods = (unsigned int*) ((*pClazz) + ITABLE_OFF);
         if(! (*vmethods) ) return 0;
-        LOGI(" VMETHS clazz: 0x%08x, * = 0x%08x -> vmeths=0x%08x, * = 0x%08x \n", pClazz , *pClazz, vmethods, *vmethods);        
+        //LOGI(" VMETHS clazz: 0x%08x, * = 0x%08x -> vmeths=0x%08x, * = 0x%08x \n", pClazz , *pClazz, vmethods, *vmethods);
     }
     breakMe();
     unsigned char *g2 = (unsigned char*) &gadget; 
@@ -458,7 +453,7 @@ static unsigned int* searchInMemoryVmeths(unsigned int start, int gadget, int lo
         //LOGI("check p 0x%08x and gadget 0x%08x \n",p, gadget);
         if(! memcmp(p, g2, 4 )){
             unsigned int* found_at = (unsigned int*) (*vmethods + i) ;
-            LOGI("target: 0x%08x at 0x%08x. vmeths = %x, i = %d \n", gadget, found_at, *vmethods, i);
+            //LOGI("target: 0x%08x at 0x%08x. vmeths = %x, i = %d \n", gadget, found_at, *vmethods, i);
             //changed = 1;
 
             return found_at;

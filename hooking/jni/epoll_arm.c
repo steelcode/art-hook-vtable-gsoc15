@@ -9,9 +9,8 @@
  *
  */
 
-#include <sys/types.h>
 #include <stdio.h>
-
+#include <sys/epoll.h>
 #undef log
 
 #define log(...) \
