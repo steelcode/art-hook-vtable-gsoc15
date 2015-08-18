@@ -18,13 +18,31 @@ if [ -n $RES ]; then
     echo "moving on.."
 fi
 
+# TODO: check if adb was started as root
+# alla bruttodio
+
+RES=`adb root`
+
+status=$?
+
+
+if [ $status -ne 0 ]; then
+    echo ""
+    exit 1
+elif [[ $RES == *"disabled"* ]]; then
+    echo "adb root disabled, error message: $RES"
+    echo "please, this demo requires adb running as root!"
+    exit 1
+fi
+
+
 adb wait-for-device
 
 sleep 1
 
 adb shell 'cd /data/local/tmp; sh init.sh;'
 
-adb install -r examples/app-testing.apk
+adb install -r ../examples/testing-app.apk
 
 echo -e "starting testing app"
 

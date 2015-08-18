@@ -4,14 +4,14 @@ static struct arthook_t *h = NULL;
 
 pthread_rwlock_t lock;
 
-
+/*
 int arthook_manager_init(JNIEnv* env)
 {
     if (pthread_rwlock_init(&lock,NULL) != 0) return 1;
     
     hook_demo_init(env);
 }
-
+*/
 int add_hook(arthook_t* new)
 {
     if (pthread_rwlock_wrlock(&lock) != 0) return 1;

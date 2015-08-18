@@ -1,8 +1,5 @@
 #!/bin/bash
 
-
-DIR=`pwd`
-
 TARGET_DIR=""
 
 usage(){

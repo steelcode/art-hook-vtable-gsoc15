@@ -8,7 +8,7 @@
 #include "globals.h"
 
 
-int arthook_manager_init(JNIEnv*);
+//int arthook_manager_init(JNIEnv*);
 
 
 // arthook_manager

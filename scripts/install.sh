@@ -1,12 +1,16 @@
 #!/bin/bash
-# we need to pass argument to push_patch_code.sh
+# 
 #
+
+OLDDIR=`pwd`
+
+cd ../ #back to /
 
 DIR=`pwd`
 
 IS_FIRST_RUN=false
 
-ARTHOOK_SO="$DIR/hooking/libs/armeabi/libarthook.so"
+ARTHOOK_SO="$DIR/examples/arthook_demo/libs/armeabi/libarthookdemo.so"
 
 HIJACK_BIN="$DIR/adbi/hijack/libs/armeabi/hijack"
 
@@ -31,6 +35,8 @@ print_error_and_exit()
     exit 1
 }
 
+
+#checking for NDK and SDK inside PATH
 check_dependencies()
 {
     printf "checking dependencies...\n"
@@ -48,6 +54,7 @@ check_dependencies()
     fi
 }
 
+#checking if this is the demo first run
 check_first_run()
 {
     printf "check \n"
@@ -95,7 +102,7 @@ push_to_device()
           print_error_and_exit "can't found $HIJACK_BIN, please check adbi compilation results\n"
       fi
    else
-      print_error_and_exit "can't found $ARTHOOK_SO, please check arthook ompilation results\n"
+      print_error_and_exit "can't found $ARTHOOK_SO, please check arthook compilation results\n"
    fi 
     
 }
@@ -108,8 +115,11 @@ main()
     push_to_device
     
     if [ "$IS_FIRST_RUN" = true ]; then
-        bash pusher.sh
+	cd $OLDDIR
+        bash "pusher.sh"
     fi
+
+    cd $OLDDIR
     
 }
 

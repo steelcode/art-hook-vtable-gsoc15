@@ -1,16 +1,21 @@
 #!/bin/bash
 
+OLDDIR=`pwd`
 
-HIJACK="adbi/hijack/libs/armeabi/hijack"
-ARTHOOK="hooking/libs/armeabi/libarthook.so"
-DEXFILE="examples/classes.dex"
-SCRIPTDIR="scripts"
+cd ../
+
+DIR=`pwd`
+
+HIJACK="$DIR/adbi/hijack/libs/armeabi/hijack"
+ARTHOOK="$DIR/examples/arthook_demo/libs/armeabi/libarthookdemo.so"
+DEXFILE="$DIR/examples/classes.dex"
+SCRIPTDIR="$DIR/scripts/device"
 
 DESTDIR="/data/local/tmp"
 
 fail_msg () {
 	echo ""
-	echo "maybe lunch sh build.sh ?"
+	echo "maybe lunching sh build.sh will solve the problems?"
 	echo ""
 	exit 1
 }
@@ -64,3 +69,5 @@ adb_push_files
 echo -e "\n"
 echo -e "all files has been pushed to the device!"
 echo -e "now connect to the device/emu, \"cd /data/local/tmp\" and \"sh ./init.sh\" \n"
+
+cd $OLDDIR

@@ -1,8 +1,13 @@
 #!/bin/sh
 
-cd hooking/jni
+cd arthook/core/jni
 ndk-build
-cd ../..
+cd ../../../
+
+
+cd examples/arthook_demo/jni
+ndk-build
+cd ../../../
 
 
 
