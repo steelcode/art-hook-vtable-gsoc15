@@ -1,3 +1,3 @@
-## ART vtable hooking 
+## ARTDroid:   fooling the droid for fun and profit
 
-READ the [Wiki!](https://github.com/steelcode/art-hook-vtable-gsoc15/wiki)
+please, READ the [Wiki!](https://github.com/steelcode/art-hook-vtable-gsoc15/wiki)
