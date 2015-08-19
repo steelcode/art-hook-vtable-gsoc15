@@ -9,39 +9,43 @@
 // adbi include
 #include "base.h"
 
-
 #include "arthook_demo.h"
 
-static WrapMethodToHook methodsToHook[] = {
+static WrapMethodsToHook methodsToHook[] = {
 
     {"android/telephony/TelephonyManager","getDeviceId","()Ljava/lang/String;",
-        "org/sid/arthookbridge/HookCls", "getDeviceId", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},  
+        MYHOOKCLASS, "getDeviceId", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},
     
-    {"android/app/ContextImpl","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;", "org/sid/arthookbridge/HookCls", "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
-        {"android/app/Activity","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;", "org/sid/arthookbridge/HookCls", "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
+    {"android/app/ContextImpl","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
+            MYHOOKCLASS, "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
+
+    {"android/app/Activity","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
+        MYHOOKCLASS, "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
 
 
     /*
        {"android/telephony/TelephonyManager","getDeviceSoftwareVersion","()Ljava/lang/String;",
-       "org/sid/arthookbridge/HookCls", NULL},
+       MYHOOKCLASS, NULL},
     {"android/telephony/TelephonyManager","getNetworkOperator","()Ljava/lang/String;",
-        "org/sid/arthookbridge/HookCls", "getNetworkOperator", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},
+        MYHOOKCLASS, "getNetworkOperator", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},
 
-       {"android/telephony/SmsManager", "sendTextMessage", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V", "org/sid/arthookbridge/HookCls", NULL},
+       {"android/telephony/SmsManager", "sendTextMessage", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V", MYHOOKCLASS, NULL},
 
        */
 };
 
 
 
-int hook_demo_init(JNIEnv* env)
+int hookdemo_init(JNIEnv* env)
 {
-    set_dexloader(env);
-    jobject dexloader = get_dexloader();
-    jclass test = findClassFromClassLoader(env,dexloader,"org/sid/arthookbridge/HookCls" );
-    if(jniRegisterNativeMethods(env, test) == 1 ){
-        LOGI("JNI REGISTER NATIVE METHODS ERROR!!! \n");
-    }
+    arthook_manager_init(env);
+    jobject dexloader = set_dexloader(env, MYDEX, MYOPTDIR);
+
+    jclass test = load_class_from_dex(env, dexloader, MYHOOKCLASS);
+    //jclass test = findClassFromClassLoader(env,dexloader,MYHOOKCLASS );
+    //if(jniRegisterNativeMethods(env, test) == 1 ){
+    //    LOGI("JNI REGISTER NATIVE METHODS ERROR!!! \n");
+    //}
 
     int i = 0;
     int nelem = NELEM(methodsToHook);
@@ -55,23 +59,17 @@ int hook_demo_init(JNIEnv* env)
         add_hook(tmp);
     }    
     print_hashtable();
-    LOGG("[ %s ]  init phase terminated, happy hooking !! \n", __PRETTY_FUNCTION__);
+    LOGG("[ %s ]  init terminated, happy hooking !! \n", __PRETTY_FUNCTION__);
 }
-
-
-
-
-// this file is going to be compiled into a thumb mode binary
-
 
 
 static struct hook_t eph;
 static struct hook_t invokeh;
-
+static int done = 0;
 char artlogfile[]  = "/data/local/tmp/arthook.log";
 
 JavaVM* vms = NULL;
-
+pthread_mutex_t lock;
 
 // arm version of hook
 extern int my_epoll_wait_arm(int epfd, struct epoll_event *events, int maxevents, int timeout);
@@ -82,7 +80,7 @@ extern int my_epoll_wait_arm(int epfd, struct epoll_event *events, int maxevents
  */
 static void my_log(char *msg)
 {
-    log("%s", msg)
+    log("%s", msg);
 }
 void artlogmsgtofile(char* msg){
     int fp = open(artlogfile, O_WRONLY|O_APPEND);
@@ -101,11 +99,9 @@ void* set_arthooklogfunction(void* func){
 
 void init_hook()
 {
-    LOGI("INIT HOOK INIZIO\n");
     JNIEnv* env = get_jnienv();
     //arthook_manager_init(env);
-    hook_demo_init(env);
-    LOGI("FINITO INIT HOOK !!!\n");
+    hookdemo_init(env);
 }
 
 void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs){
@@ -157,23 +153,18 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
 
 int my_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
 {
-
-    log("dentro my epoll wait \n");
+    if (pthread_mutex_lock(&lock) != 0) return 1;
+    log("inside %s \n", __PRETTY_FUNCTION__);
     int (*orig_epoll_wait)(int epfd, struct epoll_event *events, int maxevents, int timeout);
     orig_epoll_wait = (void*)eph.orig;
 
     hook_precall(&eph);
     int res = orig_epoll_wait(epfd, events, maxevents, timeout);
-    /*if (counter) {
-        hook_postcall(&eph);
-        log("epoll_wait() called\n");
-        counter--;
-        if (!counter)
-            log("removing hook for epoll_wait()\n");
+    if(!done) {
+        init_hook();
+        done = 1;
     }
-    */
-    init_hook();
-
+    pthread_mutex_unlock(&lock);
     return res;
 }
 
@@ -185,11 +176,11 @@ void my_init(void)
     // adbi and arthook log functions
     set_logfunction(my_log);
     set_arthooklogfunction(artlogmsgtofile);
-    log("%s started\n", __FILE__)
+    log("ARTDroid %s started\n", __FILE__);
 
     // resolve libart.so symbols used by artstuff.c
     resolve_symbols(&d);
-
+    if (pthread_mutex_init(&lock,NULL) != 0) return;
     // hook native functions
     hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
     hook(&invokeh, getpid(), "libart.", "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_", my_epoll_wait_arm, my_invoke_method);

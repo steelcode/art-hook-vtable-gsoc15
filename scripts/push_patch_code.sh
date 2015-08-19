@@ -7,7 +7,7 @@ cat << EOF
 
 usage:
     -h "print this help"    
-    -t "patch code to push on device [apk || dex ]"
+    -t "specify patch code to push on device [apk || dex ]"
 
 EOF
 

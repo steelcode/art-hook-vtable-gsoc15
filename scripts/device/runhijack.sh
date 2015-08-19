@@ -21,7 +21,7 @@ check_dependencies
 #-p -l  -d -z -s 
 BIN=/data/local/tmp/hijack 
 PIDZYG=`ps | grep zygote  | awk '{print $2}'`
-LIB=/data/local/tmp/libarthook.so
+LIB=/data/local/tmp/libarthookdemo.so
 ZYG=true
 
 function help ()

@@ -41,7 +41,7 @@ chmod -R 777 *
 
 echo -e "ALL DONE!! Now you can inject the arthook .so into the target process using the runhijack.sh script!!\n"
 
-echo -e "Please, remember to chown the \"dex/opt\" dir with the UID of the target application!"
+echo -e "Please, remember to chown the \"dex/opt\" dir with the \$UID of the target application!"
 echo -e "run in this dir: chown \$UID:\$UID dex/opt\n"
 
 

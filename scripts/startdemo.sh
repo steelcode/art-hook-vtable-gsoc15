@@ -60,9 +60,6 @@ echo "target appliation pid: $MYPID and $MYUID"
 
 adb shell chown $MYUID:$MYUID /data/local/tmp/dex/opt
 
-adb shell "cd /data/local/tmp; "
-
-sleep 2 
 
 echo -e "starting hooking...."
 

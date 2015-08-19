@@ -31,6 +31,9 @@ check_ret () {
 
 print_error_and_exit()
 {
+    if [ "$IS_FIRST_RUN" = true ] ; then
+	rm -fv "$DIR/.first_run.no"
+    fi
     echo -e $1
     exit 1
 }

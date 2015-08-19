@@ -29,8 +29,7 @@
 
 #define MAXSIZE 512
 
-#define MYDEXDIR  "/data/local/tmp/dex/target.dex"
-#define MYOPTDIR  "/data/local/tmp/dex/opt"
+
 
 
 jint getAPIVersion(JNIEnv *);

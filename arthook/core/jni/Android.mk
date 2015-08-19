@@ -25,8 +25,8 @@ LOCAL_CFLAGS := -g -std=gnu99
 LOCAL_ARM_MODE := thumb
 LOCAL_SHARED_LIBRARIES := dl
 LOCAL_LDLIBS := -llog 
-LOCAL_LDLIBS += -Wl,--start-group ../../../adbi/instruments/base/obj/local/armeabi/libbase.a -Wl,--end-group
-#LOCAL_STATIC_LIBRARIES := ../../../adbi/instruments/base/obj/local/armeabi/libbase.a 
+#LOCAL_LDLIBS += -Wl,--start-group ../../../adbi/instruments/base/obj/local/armeabi/libbase.a -Wl,--end-group
+LOCAL_STATIC_LIBRARIES := -Wl,--start-group ../../../adbi/instruments/base/obj/local/armeabi/libbase.a -Wl,--end-group
 
 include $(BUILD_STATIC_LIBRARY)
 #include $(BUILD_SHARED_LIBRARY)

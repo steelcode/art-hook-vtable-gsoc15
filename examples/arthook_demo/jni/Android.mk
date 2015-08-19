@@ -23,4 +23,6 @@ LOCAL_LDLIBS    := -L../../../arthook/core/jni/libs -ldl -llog
 LOCAL_LDLIBS    += -Wl,--start-group ../../../adbi/instruments/base/obj/local/armeabi/libbase.a ../../../arthook/core/obj/local/armeabi/libarthook.a -Wl,--end-group
 LOCAL_CFLAGS    := -g -std=gnu99
 LOCAL_ARM_MODE := thumb
+#LOCAL_STATIC_LIBRARIES := -Wl,--start-group ../../../adbi/instruments/base/obj/local/armeabi/libbase.a ../../../arthook/core/obj/local/armeabi/libarthook.a -Wl,--end-group
+
 include $(BUILD_SHARED_LIBRARY)

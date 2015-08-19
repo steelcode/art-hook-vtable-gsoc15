@@ -146,9 +146,7 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
         arthook_t* tmp = (arthook_t*) get_method_from_hashtable(mymid);
         return tmp;
     }
-
-
-    //porcodio
+/*
     jclass xxx = (*env)->FindClass(env, "android/content/Context");
     jmethodID xxxmid = (*env)->GetMethodID(env, xxx, "openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;");
     xxx = (*env)->FindClass(env, "android/app/ContextImpl");
@@ -157,8 +155,8 @@ void* hh_check_javareflection_call(JNIEnv *env, jobject javaMethod, jobject java
     xxx = (*env)->FindClass(env, "android/app/Activity");
     jmethodID xxxmid3 = (*env)->GetMethodID(env, xxx, "openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;");
     unsigned int *pi = (unsigned int*) xxxmid;
-    arthooklog("porcodio !!! forse cercavi: %p = %p\n", xxxmid3, xxxmid2);
-
+    arthooklog("forse cercavi: %p = %p\n", xxxmid3, xxxmid2);
+*/
     return NULL;
 }
 
@@ -250,26 +248,6 @@ static jvalue* tryToUnbox(JNIEnv* env, arthook_t* hook, unsigned int* javaArgs,j
     }
 
     return args;
-/*
-    jclass t = (*env)->GetObjectClass(env, thiz);
-    jsize len = (*env)->GetStringUTFLength(env, s);
-    char* arg1 = calloc(len+1, 1);
-    (*env)->GetStringUTFRegion(env, s, 0, len, arg1);
-    arthooklog("creo filename: %s\n", arg1);
-    int arg2 = 0;
-    free(arg1);
-
-    arthooklog("debug args: t = %x , thiz = %x, mid = %x, arg1 = %x , arg2= %x \n", t, thiz, hook->original_meth_ID, args[0].l, args[1].i);
-    jobject ress = NULL;
-
-
-    ress = (*env)->CallNonvirtualObjectMethod(env, thiz, t, hook->original_meth_ID, *args);
-
-    arthooklog("fatta la chiamata da dentro trytounbox\n");
-    if(ress != NULL)
-       return (*env)->NewGlobalRef(env, ress);
-    return NULL;
-*/
 }
 
 void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jobject javaArgs){
@@ -293,8 +271,6 @@ void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jo
         if(res != NULL)
            return (*env)->NewGlobalRef(env, res);
     }
-
-    //return call_original_method(env, tmp, javaReceiver, myargs);
 }
 
 //XXX: devo  gestire gli argomenti
@@ -323,7 +299,6 @@ jobject call_patch_method(JNIEnv* env, arthook_t* h, jobject thiz, jobject javaA
         return NULL;
     }
 
-//    return (*env)->CallStaticObjectMethod(env, h->hook_cls, h->hook_meth_ID, thiz);
 }
 
 // used by reflection calls
