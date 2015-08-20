@@ -2,10 +2,12 @@
 #define ARTHOOK_T_H
 #include <jni.h>
 #include "uthash.h"
-
 #define MAXSIZE 512
 
 
+#define bool int
+#define true 1
+#define false 0
 
 typedef struct arthook_t{
     char clsname[MAXSIZE];
@@ -20,6 +22,7 @@ typedef struct arthook_t{
     jobject original_obj;
     jclass original_cls;
     int type;
+    bool isSingleton;
 
     UT_hash_handle hh;
 }arthook_t;

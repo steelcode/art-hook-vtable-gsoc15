@@ -20,21 +20,6 @@ jobject set_dexloader(JNIEnv* env, char* dexfile, char* optdir)
     jclass c2 = loadClassFromClassLoader(env, dexloader, BRIDGE_UTILS );
     return gDexLoader;
 }
-
-jobject _get_original_method(JNIEnv* env, jobject trashme, jstring hook_key)
-{
-    LOGI("chiamato %s \n ",  __PRETTY_FUNCTION__ ); 
-    char *key = getCharFromJstring(env, hook_key);
-    LOGI("cerco il metodo : %s \n", key);    
-    arthook_t* h = get_hook_by_key(key);
-    if(!h) return NULL;
-    void* asd = malloc(4);
-    LOGI("io valgo: %x \n", (unsigned int) &h->original_meth_ID);
-    memcpy(asd, &h->original_meth_ID, 4);
-    LOGI("ora valgo %x \n", (unsigned int ) asd);
-    return (jobject) (*env)->NewGlobalRef(env, asd);
-    
-}
 jint printStackTraceFromJava(JNIEnv* env)
 {
     jclass test = findClassFromClassLoader(env,gDexLoader,BRIDGE_UTILS);
@@ -91,17 +76,7 @@ jobject callGetObj(JNIEnv* env, jobject javaArgs, int index)
 
 }
 
-//DEPRECATED
-jobject hook_bridge_OriginalCall
-  (JNIEnv *env, jstring hook_key, jobject o, jstring arg1)
-{
-    char *key = getCharFromJstring(env, hook_key);
-    LOGI("dentro hooks manager, cerco : %s \n", key);
-    arthook_t* myhook = (arthook_t*) get_hook_by_key(key);
-    if(myhook == NULL)
-        return NULL;
-    return  call_original_method(env, myhook, o, arg1);    
-}
+
 
 static JNINativeMethod artHookMethods[] = {
     /* name, signature, funcPtr */ 

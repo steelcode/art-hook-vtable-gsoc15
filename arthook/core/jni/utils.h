@@ -35,13 +35,9 @@
 jint getAPIVersion(JNIEnv *);
 void breakMe();
 void set_pointer(unsigned int *, unsigned int );
-void hookDevId(JNIEnv *, jobject , int );
-char * get_dev_id(JNIEnv *, jobject );
 jmethodID getMethodID(JNIEnv *,jclass , char *, char* );
-void callTestJNI(JNIEnv *, jobject );
 jmethodID fromObjToMethodID(JNIEnv *, jobject , char *, char *);
 int isLollipop(JNIEnv *);
-void findClass_test(JNIEnv*);
 jclass _findClass(JNIEnv* , char* );
 jobject createInstanceFromClsName(JNIEnv* , char* );
 jobject createInstanceFromJClsName(JNIEnv* , jstring );

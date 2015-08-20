@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include "utils.h"
-#include "hook_demo.h"
 #include "globals.h"
 
 

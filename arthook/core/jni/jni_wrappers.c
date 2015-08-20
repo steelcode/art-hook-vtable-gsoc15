@@ -28,49 +28,48 @@ extern JNIEnv* get_jnienv(){
 jobject createDexClassLoader(JNIEnv* env, jobject classLoader, char* mydexpath, char* myoptdir)
 {
     jthrowable exc;
-    LOGI("dentro create dex class loader!!! pid: %d\n", getpid());
+    LOGI("%s , pid: %d\n",__PRETTY_FUNCTION__, getpid());
     jclass dexclassloader_cls = (*env)->FindClass(env, "dalvik/system/DexClassLoader");
-    LOGI("trovata classe dexclassloader %p \n", dexclassloader_cls);
+    LOGI("dexclassloader class = %p \n", dexclassloader_cls);
     jmethodID constructor = (*env)->GetMethodID(env, dexclassloader_cls, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V");
-    LOGI("trovato methodid: %p \n", constructor);
+    LOGI("init methodid = %p \n", constructor);
     char* dexPath = mydexpath;
     // il proprietario di questa dir deve essere l'app
     char* optDir = myoptdir;
     jstring dexPathJ = (*env)->NewStringUTF(env, dexPath);
     jstring optDirJ = (*env)->NewStringUTF(env, optDir);
     char* libraryPath = "";
-    LOGI("sono %d, creo il dexclassloader \n", getpid());
     jobject dexloader = (*env)->NewObject(env, dexclassloader_cls, constructor, dexPathJ, optDirJ, NULL, classLoader);
     exc = (*env)->ExceptionOccurred(env);
     if(exc){
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
     }
-    LOGI("create dex loader, risultato: %p \n ", dexloader);
+    LOGI("created dex loader = %p \n ", dexloader);
     return dexloader;
 }
 
 jobject getSystemClassLoader(JNIEnv* env)
 {
     jclass classLoader = (*env)->FindClass(env, "java/lang/ClassLoader");
-    LOGI("trovato classloader class: %p \n ", classLoader);
+    LOGI("classloader class =  %p \n ", classLoader);
     jmethodID getSystemCL = (*env)->GetStaticMethodID(env, classLoader, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
     jobject systemCL = (*env)->CallStaticObjectMethod(env, classLoader, getSystemCL);
-    LOGI("trovato systemclassloader: %p \n ", systemCL);
+    LOGI("systemclassloader = %p \n ", systemCL);
     return systemCL;
 
 }
 
 jclass loadClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetName)
 {
-    LOGI("dentro loadclass from classloader, targetname = %s \n ", targetName);
+    LOGI(" %s, targetname = %s \n ",__PRETTY_FUNCTION__, targetName);
     jclass classLoader_cls = (*env)->FindClass(env,"java/lang/ClassLoader");
     jmethodID loadClass = (*env)->GetMethodID(env, classLoader_cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-    LOGI("trovato meth loadClass: %p \n", loadClass);
+    LOGI("loadClass mid = %p \n", loadClass);
     //jstring name = (*env)->NewStringUTF(env,"test/sid/org/ndksample/HookCls");   
     jstring name = (*env)->NewStringUTF(env,targetName);   
     jclass loaded = (*env)->CallObjectMethod(env, classLoader, loadClass, name);
-    LOGI("caricata class: %p \n" , loaded);
+    LOGI("loaded class = %p \n" , loaded);
     return (jclass) (*env)->NewGlobalRef(env, loaded);
 }
 
@@ -78,11 +77,10 @@ jclass findClassFromClassLoader(JNIEnv* env, jobject classLoader, char* targetNa
 {
     jclass classLoader_cls = (*env)->FindClass(env,"java/lang/ClassLoader");
     jmethodID findClass = (*env)->GetMethodID(env, classLoader_cls, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-    LOGI("trovato meth findClass: %p \n", findClass);
+    LOGI("findClass mid = %p \n", findClass);
     jstring name = (*env)->NewStringUTF(env,targetName);   
     jclass res = (*env)->CallObjectMethod(env,classLoader,findClass,name);
-    LOGI("trovata Hookcls class: %p\n" , res);
+    LOGI("HookClass =  %p\n" , res);
     return (jclass) (*env)->NewGlobalRef(env, res) ; 
 }
-
 
