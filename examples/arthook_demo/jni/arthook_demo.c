@@ -22,6 +22,16 @@ static WrapMethodsToHook methodsToHook[] = {
     {"android/app/Activity","openFileOutput","(Ljava/lang/String;I)Ljava/io/FileOutputStream;",
         MYHOOKCLASS, "openFileOutput", "(Ljava/lang/Object;Ljava/lang/String;I)Ljava/io/FileOutputStream;", NULL},
 
+    {"android/hardware/Camera","takePicture",
+     "(Landroid/hardware/Camera$ShutterCallback;Landroid/hardware/Camera$PictureCallback;Landroid/hardware/Camera$PictureCallback;)V",
+     MYHOOKCLASS, "takePicture",
+            "(Ljava/lang/Object;Landroid/hardware/Camera$ShutterCallback;Landroid/hardware/Camera$PictureCallback;Landroid/hardware/Camera$PictureCallback;)V"
+            , NULL},
+    {"android/telephony/SmsManager", "sendTextMessage",
+            "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V",
+            MYHOOKCLASS, "sendTextMessage",
+            "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V",
+            NULL},
 
     /*
        {"android/telephony/TelephonyManager","getDeviceSoftwareVersion","()Ljava/lang/String;",
@@ -29,7 +39,7 @@ static WrapMethodsToHook methodsToHook[] = {
     {"android/telephony/TelephonyManager","getNetworkOperator","()Ljava/lang/String;",
         MYHOOKCLASS, "getNetworkOperator", "(Ljava/lang/Object;)Ljava/lang/String;", NULL},
 
-       {"android/telephony/SmsManager", "sendTextMessage", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Landroid/app/PendingIntent;Landroid/app/PendingIntent;)V", MYHOOKCLASS, NULL},
+
 
        */
 };
@@ -105,12 +115,12 @@ void init_hook()
 }
 
 void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobject javaArgs){
-    log("!!! dentro my invoke method, receiver vale: 0x%08x, javamethod : 0x%08x \n", (unsigned int) javaReceiver,  (unsigned int) javaMethod);
+    log("!!! %s receiver : 0x%08x, javamethod : 0x%08x \n", __PRETTY_FUNCTION__, (unsigned int) javaReceiver,  (unsigned int) javaMethod);
 
     void* checkcalledmethod = (void*) 1;
     void* res = NULL;
     JNIEnv* th_env = get_jnienv();
-    log("env vvale: %p \n", th_env);
+    log("env  =  %p \n", th_env);
     jint checkstack = printStackTraceFromJava(th_env);
 
     // check if an hooked method is the target of the reflection call
@@ -125,30 +135,26 @@ void* my_invoke_method(void* soa, jobject javaMethod, void* javaReceiver, jobjec
 
     // called method is not an hooked method
     if(!checkcalledmethod){
-        log("chiamo il metodo originale richiesto con la reflection \n");
+        log("called method is not an hooked method, return to normal flow \n");
         hook_precall(&invokeh);
-
         res = orig_invoke_method(soa,javaMethod,javaReceiver,javaArgs);
-
         hook_postcall(&invokeh);
     }
     else{
         if(checkstack){
-            log("!!! NON chiamo il metodo usando la reflection! \n");
             // trapped call is from a "patch method"
             // so we have to direct call the original method
+            log("trapped call is from trusted patch code, calling original method \n");
             return callOriginalReflectedMethod(th_env, javaReceiver, (arthook_t*) checkcalledmethod, javaArgs);
         }
         else{
             // we have to call the "patch method"
             //
-            log("!!! CHIAMO IL PATCH METHOD !!!  \n");
+            log("ok hooked method founded, calling patch method \n");
             return call_patch_method(th_env, (arthook_t*) checkcalledmethod, javaReceiver, javaArgs);
         }
-
     }
     return res;
-
 }
 
 int my_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
@@ -185,6 +191,6 @@ void my_init(void)
     hook(&eph, getpid(), "libc.", "epoll_wait", my_epoll_wait_arm, my_epoll_wait);
     hook(&invokeh, getpid(), "libart.", "_ZN3art12InvokeMethodERKNS_18ScopedObjectAccessEP8_jobjectS4_S4_", my_epoll_wait_arm, my_invoke_method);
 
-    log("fine %s \n", __PRETTY_FUNCTION__);
+    log("%s  ended\n", __PRETTY_FUNCTION__);
 }
 
