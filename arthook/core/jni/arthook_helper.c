@@ -80,10 +80,15 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
 
         jfieldID field = (*env)->GetStaticFieldID(env, cls, "sInstance", "Landroid/telephony/SmsManager;");
         jobject o =  (*env)->GetStaticObjectField(env, cls, field);
+        LOGI("singleton : %p \n", o);
+        LOGI("SmsManager obj : %p\n", res);
+
+
         jclass target =(*env)->GetObjectClass(env, o);
         jmethodID mid = (*env)->GetMethodID(env,target, mname, msig);
-
+        LOGI("singleton mid: %p \n", mid);
         target_meth_ID = (*env)->GetMethodID(env, target, mname, msig);
+        LOGI("target mid: %p \n", target_meth_ID);
         gTarget = field;
 
         tmp->isSingleton = false;
@@ -122,7 +127,7 @@ arthook_t* create_hook(JNIEnv *env, char *clsname, const char* mname,const  char
  */
 
 void* get_artmethod_from_reflection(JNIEnv* env, jobject javaMethod){
-    LOGI("called %s \n", __PRETTY_FUNCTION__);
+    LOGI("called %s with %p \n", __PRETTY_FUNCTION__, javaMethod);
     jclass c = (*env)->FindClass(env, "java/lang/reflect/AbstractMethod");
     jclass c1 = (*env)->FindClass(env, "java/lang/reflect/Method");
     jfieldID fid = (*env)->GetFieldID(env, c, "artMethod", "Ljava/lang/reflect/ArtMethod;");
@@ -130,10 +135,14 @@ void* get_artmethod_from_reflection(JNIEnv* env, jobject javaMethod){
     unsigned char* off = (unsigned char*) (myfid + 0x14); //memory offset
     unsigned int* myclazz = javaMethod;
     unsigned int* mymid = (unsigned int*) (*myclazz + *off);
-    if(mymid)
+    if(mymid) {
+        LOGI("%s,founded mid: %p \n", __PRETTY_FUNCTION__,mymid);
         return mymid;
-    else
+    }
+    else {
+        LOGI("%s, Error!!\n", __PRETTY_FUNCTION__);
         return NULL;
+    }
 }
 
 /*
@@ -252,7 +261,11 @@ void* callOriginalReflectedMethod(JNIEnv* env, jobject thiz, arthook_t* hook, jo
     }
     if(args){
         jclass t = (*env)->GetObjectClass(env, thiz);
-        res = (*env)->CallNonvirtualObjectMethodA(env, thiz, t, hook->original_meth_ID,args);
+        if(strstr(hook->key, "sendTextMessage")){
+            (*env)->CallNonvirtualVoidMethodA(env, thiz, t, hook->original_meth_ID,args);
+        }
+        else
+            res = (*env)->CallNonvirtualObjectMethodA(env, thiz, t, hook->original_meth_ID,args);
         if(res != NULL)
            return (*env)->NewGlobalRef(env, res);
         else return NULL;
